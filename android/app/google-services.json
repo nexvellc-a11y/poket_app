@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "241746752545",
+    "project_id": "shopapp-64137",
+    "storage_bucket": "shopapp-64137.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241746752545:android:a57a1e8c1751af3531df60",
+        "android_client_info": {
+          "package_name": "com.example.poketstore"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3ZLNcKuOc_773G5rD1_AFyPPuMaq-Cwg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241746752545:android:eb8186a492e7b1d231df60",
+        "android_client_info": {
+          "package_name": "com.poketstor.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3ZLNcKuOc_773G5rD1_AFyPPuMaq-Cwg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241746752545:android:168fbe279773d15131df60",
+        "android_client_info": {
+          "package_name": "com.poketstor.platform"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3ZLNcKuOc_773G5rD1_AFyPPuMaq-Cwg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
