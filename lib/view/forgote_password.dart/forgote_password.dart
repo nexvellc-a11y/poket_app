@@ -9,6 +9,7 @@ class ForgotPasswordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -29,14 +30,17 @@ class ForgotPasswordScreen extends StatelessWidget {
         child: SafeArea(
           child: Consumer<ForgotPasswordProvider>(
             builder: (context, provider, _) {
-              return Padding(
+              return SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Form(
                   key: provider.formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 40),
+
                       const Text(
                         'Forgot Password?',
                         style: TextStyle(
@@ -45,15 +49,18 @@ class ForgotPasswordScreen extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
+
                       const SizedBox(height: 10),
+
                       const Text(
-                        "Enter your registered email address. We’ll send you a password reset link.",
+                        "Enter your registered email address. We’ll send you a code.",
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.white,
                           height: 1.5,
                         ),
                       ),
+
                       const SizedBox(height: 30),
 
                       /// EMAIL FIELD
@@ -103,7 +110,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                         ),
                       ),
 
-                      const Spacer(),
+                      const SizedBox(height: 40),
 
                       /// LOGIN REDIRECT
                       Row(

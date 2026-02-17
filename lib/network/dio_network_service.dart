@@ -45,14 +45,11 @@ class DioNetworkService {
 
         // ================= ERROR =================
         onError: (error, handler) async {
-          // 🔴 NETWORK / DNS ERROR
           if (error.type == DioExceptionType.connectionError ||
               error.type == DioExceptionType.unknown) {
-            log('🔴 Network error – NO RESET, NO CLOSE');
             return handler.next(error);
           }
 
-          // 🔁 Only handle 401
           if (error.response?.statusCode != 401) {
             return handler.next(error);
           }
@@ -66,8 +63,7 @@ class DioNetworkService {
           }
 
           if (_isRefreshing) {
-            _retryQueue.add(error.requestOptions);
-            return;
+            return handler.next(error);
           }
 
           _isRefreshing = true;
@@ -85,12 +81,6 @@ class DioNetworkService {
 
             await prefs.setString('accessToken', newAccessToken);
 
-            for (final req in _retryQueue) {
-              req.headers['Authorization'] = 'Bearer $newAccessToken';
-              dio.fetch(req);
-            }
-            _retryQueue.clear();
-
             _isRefreshing = false;
 
             error.requestOptions.headers['Authorization'] =
@@ -100,7 +90,6 @@ class DioNetworkService {
             return handler.resolve(response);
           } catch (e) {
             _isRefreshing = false;
-            _retryQueue.clear();
             await _forceLogout();
             return handler.next(error);
           }

@@ -33,12 +33,15 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showAllStores = false;
   bool _isDataLoaded = false;
   String? _currentAddress;
-  // ignore: unused_field
   Position? _currentPosition;
 
   late LocationMapController _locationMapController;
-  // ignore: unused_field
   late HomeProductController _homeProductController;
+
+  // Responsive breakpoints
+  static const double _mobileBreakpoint = 600;
+  static const double _tabletBreakpoint = 900;
+  static const double _desktopBreakpoint = 1200;
 
   @override
   void initState() {
@@ -81,13 +84,11 @@ class _HomeScreenState extends State<HomeScreen> {
         throw Exception("User ID not found in SharedPreferences");
       }
 
-      // ✅ Get current location first
       await _getCurrentLocation();
 
       await Future.wait([
         _locationMapController.loadCurrentUserLocation(),
         Provider.of<ShopNearbyController>(
-          // ignore: use_build_context_synchronously
           context,
           listen: false,
         ).loadNearbyShops(),
@@ -106,12 +107,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// ✅ Get current location using Geolocator
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // Check if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       setState(() {
@@ -120,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    // Check permission
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -140,9 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    // Get position
     final position = await Geolocator.getCurrentPosition(
-      // ignore: deprecated_member_use
       desiredAccuracy: LocationAccuracy.high,
     );
 
@@ -150,11 +146,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _currentPosition = position;
     });
 
-    // Reverse geocode the coordinates
     await _getAddressFromLatLng(position);
   }
 
-  /// ✅ Convert coordinates to human-readable address
   Future<void> _getAddressFromLatLng(Position position) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
@@ -174,6 +168,37 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Helper methods for responsive design
+  bool get _isMobile => MediaQuery.of(context).size.width < _mobileBreakpoint;
+  bool get _isTablet =>
+      MediaQuery.of(context).size.width >= _mobileBreakpoint &&
+      MediaQuery.of(context).size.width < _tabletBreakpoint;
+  bool get _isDesktop =>
+      MediaQuery.of(context).size.width >= _desktopBreakpoint;
+  double get _screenWidth => MediaQuery.of(context).size.width;
+  double get _screenHeight => MediaQuery.of(context).size.height;
+
+  // Responsive padding
+  double get _horizontalPadding {
+    if (_isMobile) return 13.0;
+    if (_isTablet) return 10.0;
+    return 32.0;
+  }
+
+  // Responsive spacing
+  double get _sectionSpacing {
+    if (_isMobile) return 20.0;
+    if (_isTablet) return 24.0;
+    return 32.0;
+  }
+
+  // Responsive store list item height
+  double get _storeItemHeight {
+    if (_isMobile) return 80.0;
+    if (_isTablet) return 100.0;
+    return 120.0;
+  }
+
   @override
   Widget build(BuildContext context) {
     final shopNearbyController = Provider.of<ShopNearbyController>(context);
@@ -184,7 +209,9 @@ class _HomeScreenState extends State<HomeScreen> {
             .toList();
 
     final displayedStores =
-        _showAllStores ? allActiveShops : allActiveShops.take(6).toList();
+        _showAllStores
+            ? allActiveShops
+            : allActiveShops.take(_getStoresToShow()).toList();
 
     return Container(
       decoration: const BoxDecoration(
@@ -197,263 +224,259 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: const CustomAppBar(),
-        body: Container(
-          // decoration: const BoxDecoration(
-          //   gradient: LinearGradient(
-          //     begin: Alignment.topCenter,
-          //     end: Alignment.bottomCenter,
-          //     colors: [Color(0xFF696FDD), Color(0xFF8F75FF)],
-          //   ),
-          // ),
-          child: SafeArea(
-            child:
-                _isLoadingInitialData
-                    ? const Center(child: CircularProgressIndicator())
-                    : _initialErrorMessage != null
-                    ? Center(child: Text(_initialErrorMessage!))
-                    : SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(height: 20),
-
-                          HomeSearchBar(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => SearchPage()),
-                              );
-                            },
-                          ),
-
-                          // const SearchWidget(),
-                          SizedBox(height: 20),
-                          const AdvertisementCarousel(),
-                          SizedBox(height: 10),
-
-                          // Padding(
-                          //   padding: const EdgeInsets.symmetric(
-                          //     horizontal: 16,
-                          //     vertical: 8,
-                          //   ),
-                          //   child: _buildLocationWidget(),
-                          // ),
-                          buildSectionTitle(
-                            "Stores",
-                            _showAllStores || allActiveShops.length <= 6
-                                ? ""
-                                : "See all",
-                            () => setState(
-                              () => _showAllStores = !_showAllStores,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            child:
-                                shopNearbyController.isLoading
-                                    ? const Center(
-                                      child: CircularProgressIndicator(),
-                                    )
-                                    : allActiveShops.isEmpty
-                                    ? const Center(
-                                      child: AnimatedNoDataMessage(
-                                        titleText:
-                                            "No active shops available at this location!",
-                                        subtitleText:
-                                            "Change your location and continue shopping 🚀",
-                                      ),
-                                    )
-                                    : // Inside your Padding widget where GridView.builder is
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 2.0,
-                                      ),
-                                      child:
-                                          shopNearbyController.isLoading
-                                              ? const Center(
-                                                child:
-                                                    CircularProgressIndicator(),
-                                              )
-                                              : allActiveShops.isEmpty
-                                              ? const Center(
-                                                child: AnimatedNoDataMessage(
-                                                  titleText:
-                                                      "No active shops available at this location!",
-                                                  subtitleText:
-                                                      "Change your location and continue shopping 🚀",
-                                                ),
-                                              )
-                                              : ListView.builder(
-                                                shrinkWrap: true,
-                                                physics:
-                                                    const NeverScrollableScrollPhysics(),
-                                                itemCount:
-                                                    displayedStores.length,
-                                                itemBuilder: (context, index) {
-                                                  final shop =
-                                                      displayedStores[index];
-                                                  return InkWell(
-                                                    onTap: () {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                          builder:
-                                                              (
-                                                                context,
-                                                              ) => ShopProductsScreen(
-                                                                shop: ShopModel(
-                                                                  id:
-                                                                      shop.id ??
-                                                                      '',
-                                                                  shopName:
-                                                                      shop.shopName ??
-                                                                      '',
-                                                                  headerImage:
-                                                                      shop.headerImage,
-                                                                  mobileNumber:
-                                                                      shop.mobileNumber ??
-                                                                      '',
-                                                                  place:
-                                                                      shop.place ??
-                                                                      '',
-                                                                ),
-                                                              ),
-                                                        ),
-                                                      );
-                                                    },
-                                                    child: buildStoreListItem(
-                                                      shop.shopName ?? '',
-                                                      shop.headerImage,
-                                                      (shop.category ?? [])
-                                                          .join(", "),
-
-                                                      shop.locality
-                                                          .toString(), // Ensure your model includes distance
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                    ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-                      ),
-                    ),
-          ),
+        body: SafeArea(
+          child:
+              _isLoadingInitialData
+                  ? const Center(child: CircularProgressIndicator())
+                  : _initialErrorMessage != null
+                  ? Center(child: Text(_initialErrorMessage!))
+                  : _buildMainContent(
+                    shopNearbyController,
+                    displayedStores,
+                    allActiveShops,
+                  ),
         ),
       ),
     );
   }
 
-  /// ✅ Location widget display
-  Widget _buildLocationWidget() {
-    if (_currentAddress == null) {
-      return const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 18,
-            height: 18,
+  Widget _buildMainContent(
+    ShopNearbyController shopNearbyController,
+    List<ShopNearbyModel> displayedStores,
+    List<ShopNearbyModel> allActiveShops,
+  ) {
+    return CustomScrollView(
+      slivers: [
+        // Top content that's not scrollable
+        SliverToBoxAdapter(
+          child: _buildTopContent(shopNearbyController, allActiveShops),
+        ),
+
+        // Stores list
+        _buildStoresSliver(
+          shopNearbyController,
+          displayedStores,
+          allActiveShops,
+        ),
+
+        // Bottom padding
+        SliverToBoxAdapter(child: SizedBox(height: _sectionSpacing)),
+      ],
+    );
+  }
+
+  Widget _buildTopContent(
+    ShopNearbyController shopNearbyController,
+    List<ShopNearbyModel> allActiveShops,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: _sectionSpacing * 0.8),
+
+            // Responsive search bar
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: _horizontalPadding),
+              child: HomeSearchBar(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SearchPage()),
+                  );
+                },
+              ),
+            ),
+
+            SizedBox(height: _sectionSpacing),
+
+            // Advertisement carousel with responsive height
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: _horizontalPadding * 0.5,
+              ),
+              child: SizedBox(
+                // height: _getCarouselHeight(),
+                child: const AdvertisementCarousel(),
+              ),
+            ),
+
+            SizedBox(height: _sectionSpacing),
+
+            // Stores section title
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: _horizontalPadding,
+                vertical: _sectionSpacing * 0.5,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Stores",
+                    style: TextStyle(
+                      fontSize: _getFontSize(scale: 1.2),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (!(_showAllStores ||
+                      allActiveShops.length <= _getStoresToShow()))
+                    InkWell(
+                      onTap:
+                          () =>
+                              setState(() => _showAllStores = !_showAllStores),
+                      child: Text(
+                        "See all",
+                        style: TextStyle(
+                          fontSize: _getFontSize(scale: 1.0),
+                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: _sectionSpacing * 0.5),
+          ],
+        );
+      },
+    );
+  }
+
+  // Responsive stores display - SliverList for mobile, SliverGrid for tablet/desktop
+  Widget _buildStoresSliver(
+    ShopNearbyController shopNearbyController,
+    List<ShopNearbyModel> displayedStores,
+    List<ShopNearbyModel> allActiveShops,
+  ) {
+    if (shopNearbyController.isLoading) {
+      return SliverToBoxAdapter(
+        child: SizedBox(
+          height: 200,
+          child: Center(
             child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.deepOrange,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade700),
             ),
           ),
-          SizedBox(width: 8),
-          Text(
-            "Fetching location...",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Colors.deepOrange,
-            ),
-          ),
-        ],
+        ),
       );
     }
 
-    return Text(
-      _currentAddress!,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-        color: Colors.deepOrange,
-      ),
-    );
-  }
-
-  Widget buildSectionTitle(
-    String title,
-    String actionText,
-    VoidCallback onTap,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+    if (allActiveShops.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(_horizontalPadding),
+          child: const AnimatedNoDataMessage(
+            titleText: "No active shops available at this location!",
+            subtitleText: "Change your location and continue shopping 🚀",
           ),
-          if (actionText.isNotEmpty)
-            InkWell(
-              onTap: onTap,
-              child: Text(
-                actionText,
-                style: TextStyle(color: Colors.blue.shade700),
-              ),
-            ),
-        ],
-      ),
+        ),
+      );
+    }
+
+    if (_isMobile) {
+      return _buildMobileStoresSliver(displayedStores);
+    } else {
+      return _buildGridStoresSliver(displayedStores);
+    }
+  }
+
+  Widget _buildMobileStoresSliver(List<ShopNearbyModel> stores) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final shop = stores[index];
+        return Padding(
+          padding: EdgeInsets.only(
+            left: _horizontalPadding,
+            right: _horizontalPadding,
+            bottom: _sectionSpacing * 0.5,
+            top: index == 0 ? 0 : _sectionSpacing * 0.5,
+          ),
+          child: _buildStoreListItem(shop),
+        );
+      }, childCount: stores.length),
     );
   }
 
-  Widget buildStoreListItem(
-    String name,
-    String? imageUrl,
-    String category,
-    String locality,
-  ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.grey.shade200, width: 1),
+  Widget _buildGridStoresSliver(List<ShopNearbyModel> stores) {
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: _getGridCrossAxisCount(),
+        crossAxisSpacing: _sectionSpacing * 0.8,
+        mainAxisSpacing: _sectionSpacing * 0.8,
+        childAspectRatio: _getGridChildAspectRatio(),
       ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final shop = stores[index];
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: _horizontalPadding * 0.5,
+            vertical: _sectionSpacing * 0.4,
+          ),
+          child: _buildStoreGridItem(shop),
+        );
+      }, childCount: stores.length),
+    );
+  }
+
+  Widget _buildStoreListItem(ShopNearbyModel shop) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => ShopProductsScreen(
+                  shop: ShopModel(
+                    id: shop.id ?? '',
+                    shopName: shop.shopName ?? '',
+                    headerImage: shop.headerImage,
+                    mobileNumber: shop.mobileNumber ?? '',
+                    place: shop.place ?? '',
+                  ),
+                ),
+          ),
+        );
+      },
       child: Container(
+        height: _storeItemHeight,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(_getBorderRadius()),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(_getGridItemPadding()),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // ⬇️ Slightly wider image (height same)
+              // Image container - FIXED: Use Container with explicit constraints
               Container(
-                width: 72, // ⬅️ Increased width
-                height: 65, // same height
+                width: _storeItemHeight * 0.9,
+                height: _storeItemHeight * 0.8,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(_getBorderRadius() * 0.7),
                   gradient: LinearGradient(
                     colors: [Colors.orange.shade50, Colors.orange.shade100],
                   ),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(_getBorderRadius() * 0.7),
                   child:
-                      imageUrl != null && imageUrl.isNotEmpty
+                      shop.headerImage != null && shop.headerImage!.isNotEmpty
                           ? Image.network(
-                            imageUrl,
+                            shop.headerImage!,
                             fit: BoxFit.cover,
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
@@ -467,104 +490,143 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              const SizedBox(width: 20), // Slightly reduced to give more space
-              // ⬆️ Larger content area
+              SizedBox(width: _sectionSpacing * 0.8),
+
+              // Content - FIXED: Use Expanded with constraints
               Expanded(
-                flex: 3, // ⬅️ Increased to give more width
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                        color: Colors.black87,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 1,
-                        vertical: 3,
-                      ),
-                      // decoration: BoxDecoration(
-                      //   color: Colors.orange.withOpacity(0.1),
-                      //   borderRadius: BorderRadius.circular(6),
-                      // ),
-                      child: Text(
-                        category,
-                        style: TextStyle(
-                          fontSize: 11,
-                          // color: Colors.orange.shade700,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w600,
+                child: Container(
+                  height: double.infinity,
+                  constraints: BoxConstraints(
+                    maxHeight: _storeItemHeight - (_getGridItemPadding() * 2),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Shop name with constrained height
+                      Container(
+                        constraints: BoxConstraints(
+                          maxHeight: _getFontSize() * 1.2,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_rounded,
-                          size: 13,
-                          color: Colors.grey.shade600,
+                        child: Text(
+                          shop.shopName ?? '',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: _getFontSize(),
+                            color: Colors.black87,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            locality.isNotEmpty
-                                ? locality
-                                : 'Location not available',
-                            style: TextStyle(
-                              fontSize: 12,
+                      ),
+
+                      SizedBox(
+                        height: _sectionSpacing * 0.1,
+                      ), // Reduced spacing
+                      // Category badge with fixed height
+                      Container(
+                        constraints: BoxConstraints(
+                          maxHeight: _getFontSize(scale: 1.2),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: _getGridItemPadding() * 0.2,
+                          vertical:
+                              _getGridItemPadding() *
+                              0.1, // Reduced vertical padding
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          (shop.category ?? []).join(", "),
+                          style: TextStyle(
+                            fontSize: _getFontSize(
+                              scale: 0.7,
+                            ), // Reduced font size
+                            color: Colors.orange.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+
+                      SizedBox(
+                        height: _sectionSpacing * 0.1,
+                      ), // Reduced spacing
+                      // Location row with fixed height
+                      Container(
+                        constraints: BoxConstraints(
+                          maxHeight: _getFontSize(scale: 1.2),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_rounded,
+                              size: _getFontSize(
+                                scale: 0.8,
+                              ), // Reduced icon size
                               color: Colors.grey.shade600,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                            SizedBox(
+                              width: _sectionSpacing * 0.1,
+                            ), // Reduced spacing
+                            Expanded(
+                              child: Text(
+                                shop.locality?.isNotEmpty == true
+                                    ? shop.locality.toString()
+                                    : 'Location not available',
+                                style: TextStyle(
+                                  fontSize: _getFontSize(
+                                    scale: 0.7,
+                                  ), // Reduced font size
+                                  color: Colors.grey.shade600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
-              const SizedBox(width: 6), // reduced spacing
-              // Distance + Arrow
-              Column(
-                children: [
-                  Text(
-                    "1.2 km",
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
+              SizedBox(width: _sectionSpacing * 0.3),
+
+              // Distance + Arrow - FIXED: Use Container with height constraints
+              Container(
+                height: _storeItemHeight - (_getGridItemPadding() * 2),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Text(
+                    //   "1.2 km",
+                    //   style: TextStyle(
+                    //     color: Colors.grey.shade600,
+                    //     fontSize: _getFontSize(scale: 0.7), // Reduced font size
+                    //     fontWeight: FontWeight.w500,
+                    //   ),
+                    // ),
+                    SizedBox(height: _sectionSpacing * 0.2), // Reduced spacing
+                    Container(
+                      width: _getIconSize() * 0.7, // Reduced size
+                      height: _getIconSize() * 0.7, // Reduced size
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: _getIconSize() * 0.25, // Reduced size
+                        color: Colors.orange.shade700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 12,
-                      color: Colors.orange.shade700,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -573,12 +635,241 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildStoreGridItem(ShopNearbyModel shop) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_getBorderRadius()),
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => ShopProductsScreen(
+                    shop: ShopModel(
+                      id: shop.id ?? '',
+                      shopName: shop.shopName ?? '',
+                      headerImage: shop.headerImage,
+                      mobileNumber: shop.mobileNumber ?? '',
+                      place: shop.place ?? '',
+                    ),
+                  ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(_getBorderRadius()),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_getBorderRadius()),
+            color: Colors.white,
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(_getGridItemPadding()),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image section
+                Expanded(
+                  flex: _isTablet ? 2 : 3,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(
+                        _getBorderRadius() * 0.8,
+                      ),
+                      gradient: LinearGradient(
+                        colors: [Colors.orange.shade50, Colors.orange.shade100],
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(
+                        _getBorderRadius() * 0.8,
+                      ),
+                      child:
+                          shop.headerImage != null &&
+                                  shop.headerImage!.isNotEmpty
+                              ? Image.network(
+                                shop.headerImage!,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (
+                                  context,
+                                  child,
+                                  loadingProgress,
+                                ) {
+                                  if (loadingProgress == null) return child;
+                                  return _buildImageLoadingShimmer();
+                                },
+                                errorBuilder:
+                                    (context, error, stackTrace) =>
+                                        _buildElegantPlaceholder(),
+                              )
+                              : _buildElegantPlaceholder(),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: _sectionSpacing * 0.5),
+
+                // Content section
+                Expanded(
+                  flex: _isTablet ? 3 : 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        shop.shopName ?? '',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: _getFontSize(scale: 1.0),
+                          color: Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: _getGridItemPadding() * 0.5,
+                          vertical: _getGridItemPadding() * 0.3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          (shop.category ?? []).join(", "),
+                          style: TextStyle(
+                            fontSize: _getFontSize(scale: 0.8),
+                            color: Colors.orange.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_rounded,
+                            size: _getFontSize(scale: 0.9),
+                            color: Colors.grey.shade600,
+                          ),
+                          SizedBox(width: _getGridItemPadding() * 0.3),
+                          Expanded(
+                            child: Text(
+                              shop.locality?.isNotEmpty == true
+                                  ? shop.locality.toString()
+                                  : 'Location not available',
+                              style: TextStyle(
+                                fontSize: _getFontSize(scale: 0.8),
+                                color: Colors.grey.shade600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Text(
+                          //   "1.2 km",
+                          //   style: TextStyle(
+                          //     color: Colors.grey.shade600,
+                          //     fontSize: _getFontSize(scale: 0.8),
+                          //     fontWeight: FontWeight.w500,
+                          //   ),
+                          // ),
+                          Container(
+                            width: _getIconSize(),
+                            height: _getIconSize(),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade50,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: _getIconSize() * 0.4,
+                              color: Colors.orange.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Responsive configuration methods
+  int _getStoresToShow() {
+    if (_isMobile) return 6;
+    if (_isTablet) return 8;
+    return 12;
+  }
+
+  double _getCarouselHeight() {
+    if (_isMobile) return 180.0;
+    if (_isTablet) return 220.0; // Reduced from 250 for better fit
+    return 260.0; // Reduced from 300 for better fit
+  }
+
+  int _getGridCrossAxisCount() {
+    if (_screenWidth < _tabletBreakpoint) return 2;
+    if (_screenWidth < _desktopBreakpoint) return 3;
+    return 4;
+  }
+
+  double _getGridChildAspectRatio() {
+    if (_isTablet) return 0.9;
+    return 0.85;
+  }
+
+  double _getBorderRadius() {
+    if (_isMobile) return 14.0;
+    if (_isTablet) return 16.0;
+    return 18.0;
+  }
+
+  double _getGridItemPadding() {
+    if (_isMobile) return 12.0;
+    if (_isTablet) return 16.0;
+    return 20.0;
+  }
+
+  double _getFontSize({double scale = 1.0}) {
+    double baseSize;
+    if (_isMobile) {
+      baseSize = 14.0;
+    } else if (_isTablet) {
+      baseSize = 16.0;
+    } else {
+      baseSize = 18.0;
+    }
+    return baseSize * scale;
+  }
+
+  double _getIconSize() {
+    if (_isMobile) return 28.0;
+    if (_isTablet) return 32.0;
+    return 36.0;
+  }
+
   Widget _buildElegantPlaceholder() {
     return Container(
-      width: 80,
-      height: 80,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(_getBorderRadius() * 0.7),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -590,14 +881,14 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Icon(
             Icons.store_mall_directory_rounded,
-            size: 24,
+            size: _getIconSize(),
             color: Colors.orange.shade600,
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: _sectionSpacing * 0.2),
           Text(
             'Shop',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: _getFontSize(scale: 0.7),
               color: Colors.orange.shade700,
               fontWeight: FontWeight.w600,
             ),
@@ -609,10 +900,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildImageLoadingShimmer() {
     return Container(
-      width: 70,
-      height: 70,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(_getBorderRadius() * 0.7),
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -623,863 +912,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      child: const Center(
+      child: Center(
         child: SizedBox(
-          width: 20,
-          height: 20,
+          width: _getIconSize() * 0.6,
+          height: _getIconSize() * 0.6,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.deepOrange),
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.deepOrange),
           ),
         ),
       ),
     );
   }
 }
-
-
-
-
-
-// import 'dart:async';
-
-// import 'package:flutter/material.dart';
-// import 'package:geocoding/geocoding.dart';
-// import 'package:geolocator/geolocator.dart';
-// import 'package:poketstore/controllers/fcm_controller/fcm_controller.dart';
-// import 'package:poketstore/controllers/home_product_controller/home_product_controller.dart';
-// import 'package:poketstore/controllers/location_controller/location_controller.dart';
-// import 'package:poketstore/controllers/shop_nearby_controller/shop_nearby_controller.dart';
-// import 'package:poketstore/model/add_shope_model/add_shop_model.dart';
-// import 'package:poketstore/model/shop_nearby_model/shop_nearby_model.dart';
-// import 'package:poketstore/utilities/custom_app_bar.dart';
-// import 'package:poketstore/utilities/search_bar.dart';
-// import 'package:poketstore/view/home/view/home_screen/shop_product_screen/shop_product_screen.dart';
-// import 'package:poketstore/view/home/widgets/advertisment_slider.dart';
-// import 'package:poketstore/utilities/no_data_warning.dart';
-// import 'package:provider/provider.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-
-// // Import your product model
-// import 'package:poketstore/model/product_search_model/product_search_model.dart'
-//     as productSearch;
-
-// class HomeScreen extends StatefulWidget {
-//   const HomeScreen({super.key});
-
-//   @override
-//   State<HomeScreen> createState() => _HomeScreenState();
-// }
-
-// class _HomeScreenState extends State<HomeScreen> {
-//   bool _isLoadingInitialData = true;
-//   String? _initialErrorMessage;
-//   String? _userId;
-//   bool _showAllStores = false;
-//   bool _isDataLoaded = false;
-//   String? _currentAddress;
-//   Position? _currentPosition;
-
-//   late LocationMapController _locationMapController;
-//   late HomeProductController _homeProductController;
-
-//   // 🔥 NEW SEARCH VARIABLES
-//   bool _isSearching = false;
-//   List<dynamic> _searchResults = [];
-//   String? _currentProductQuery;
-//   String? _currentState;
-//   String? _currentDistrict;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     WidgetsBinding.instance.addPostFrameCallback((_) {
-//       Provider.of<FCMProvider>(
-//         context,
-//         listen: false,
-//       ).registerFcmToken(context);
-//     });
-//   }
-
-//   @override
-//   void didChangeDependencies() {
-//     super.didChangeDependencies();
-//     if (!_isDataLoaded) {
-//       _locationMapController = Provider.of<LocationMapController>(
-//         context,
-//         listen: false,
-//       );
-//       _homeProductController = Provider.of<HomeProductController>(
-//         context,
-//         listen: false,
-//       );
-//       _loadInitialData();
-//       _isDataLoaded = true;
-//     }
-//   }
-
-//   Future<void> _loadInitialData() async {
-//     setState(() {
-//       _isLoadingInitialData = true;
-//       _initialErrorMessage = null;
-//     });
-//     try {
-//       final prefs = await SharedPreferences.getInstance();
-//       _userId = prefs.getString('userId');
-
-//       if (_userId == null) {
-//         throw Exception("User ID not found in SharedPreferences");
-//       }
-
-//       await _getCurrentLocation();
-
-//       await Future.wait([
-//         _locationMapController.loadUserLocation(_userId!),
-//         Provider.of<ShopNearbyController>(
-//           context,
-//           listen: false,
-//         ).loadNearbyShops(_userId!),
-//       ]);
-
-//       setState(() {});
-//     } catch (error) {
-//       setState(() {
-//         _initialErrorMessage = "Failed to load initial data: $error";
-//       });
-//     } finally {
-//       setState(() {
-//         _isLoadingInitialData = false;
-//       });
-//     }
-//   }
-
-//   /// Get GPS location
-//   Future<void> _getCurrentLocation() async {
-//     bool serviceEnabled;
-//     LocationPermission permission;
-
-//     serviceEnabled = await Geolocator.isLocationServiceEnabled();
-//     if (!serviceEnabled) {
-//       setState(() {
-//         _currentAddress = "Location services are disabled.";
-//       });
-//       return;
-//     }
-
-//     permission = await Geolocator.checkPermission();
-//     if (permission == LocationPermission.denied) {
-//       permission = await Geolocator.requestPermission();
-//       if (permission == LocationPermission.denied) {
-//         setState(() {
-//           _currentAddress = "Location permission denied.";
-//         });
-//         return;
-//       }
-//     }
-
-//     if (permission == LocationPermission.deniedForever) {
-//       setState(() {
-//         _currentAddress =
-//             "Location permissions are permanently denied. Enable in settings.";
-//       });
-//       return;
-//     }
-
-//     final position = await Geolocator.getCurrentPosition(
-//       desiredAccuracy: LocationAccuracy.high,
-//     );
-
-//     setState(() {
-//       _currentPosition = position;
-//     });
-
-//     await _getAddressFromLatLng(position);
-//   }
-
-//   /// Convert lat-long → address
-//   Future<void> _getAddressFromLatLng(Position position) async {
-//     try {
-//       List<Placemark> placemarks = await placemarkFromCoordinates(
-//         position.latitude,
-//         position.longitude,
-//       );
-
-//       Placemark place = placemarks[0];
-//       setState(() {
-//         _currentAddress =
-//             "${place.locality}, ${place.administrativeArea} - ${place.postalCode}";
-//       });
-//     } catch (e) {
-//       setState(() {
-//         _currentAddress = "Unable to get address";
-//       });
-//     }
-//   }
-
-//   // Callback from SearchWidget
-//   void _onSearchResultsReceived(
-//     List<dynamic> results, {
-//     String? productQuery,
-//     String? state,
-//     String? district,
-//   }) {
-//     setState(() {
-//       _searchResults = results;
-//       _isSearching = results.isNotEmpty;
-//       _currentProductQuery = productQuery;
-//       _currentState = state;
-//       _currentDistrict = district;
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final shopNearbyController = Provider.of<ShopNearbyController>(context);
-
-//     List<ShopNearbyModel> allActiveShops =
-//         shopNearbyController.shops
-//             .where((shop) => shop.subscription?.isActive == true)
-//             .toList();
-
-//     final displayedStores =
-//         _showAllStores ? allActiveShops : allActiveShops.take(6).toList();
-
-//     return Container(
-//       decoration: const BoxDecoration(
-//         gradient: LinearGradient(
-//           begin: Alignment.topCenter,
-//           end: Alignment.bottomCenter,
-//           colors: [Color(0xFF696FDD), Color(0xFF8F75FF)],
-//         ),
-//       ),
-//       child: Scaffold(
-//         backgroundColor: Colors.transparent,
-//         appBar: const CustomAppBar(),
-//         body: SafeArea(
-//           child:
-//               _isLoadingInitialData
-//                   ? const Center(child: CircularProgressIndicator())
-//                   : _initialErrorMessage != null
-//                   ? Center(child: Text(_initialErrorMessage!))
-//                   : CustomScrollView(
-//                     slivers: [
-//                       SliverToBoxAdapter(
-//                         child: Column(
-//                           children: [
-//                             const SizedBox(height: 20),
-//                             SearchWidget(
-//                               onHomeSearchResults: (
-//                                 results, {
-//                                 String? productQuery,
-//                                 String? state,
-//                                 String? district,
-//                               }) {
-//                                 _onSearchResultsReceived(
-//                                   results,
-//                                   productQuery: productQuery,
-//                                   state: state,
-//                                   district: district,
-//                                 );
-//                               },
-//                             ),
-//                             const SizedBox(height: 20),
-//                             const AdvertisementCarousel(),
-//                             const SizedBox(height: 10),
-//                           ],
-//                         ),
-//                       ),
-
-//                       _isSearching
-//                           ? SliverList(
-//                             delegate: SliverChildBuilderDelegate((
-//                               context,
-//                               index,
-//                             ) {
-//                               final result = _searchResults[index];
-
-//                               if (result is productSearch.ProductSearchModel) {
-//                                 return _buildProductCard(result);
-//                               }
-//                               if (result is ShopNearbyModel) {
-//                                 return _buildShopCard(result);
-//                               }
-//                               return const SizedBox();
-//                             }, childCount: _searchResults.length),
-//                           )
-//                           : SliverToBoxAdapter(
-//                             child: _buildNormalContent(
-//                               shopNearbyController,
-//                               displayedStores,
-//                               allActiveShops,
-//                             ),
-//                           ),
-//                     ],
-//                   ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   // ⭐ SEARCH RESULTS LIST (Now properly scrollable)
-//   Widget _buildSearchResults() {
-//     if (_searchResults.isEmpty) {
-//       return Center(
-//         child: Padding(
-//           padding: const EdgeInsets.all(16),
-//           child: Column(
-//             mainAxisAlignment: MainAxisAlignment.center,
-//             children: [
-//               Icon(
-//                 Icons.search_off,
-//                 size: 60,
-//                 color: Colors.white.withOpacity(0.7),
-//               ),
-//               const SizedBox(height: 16),
-//               Text(
-//                 "No results found",
-//                 style: TextStyle(
-//                   color: Colors.white,
-//                   fontSize: 18,
-//                   fontWeight: FontWeight.w500,
-//                 ),
-//               ),
-//               if (_currentState != null || _currentDistrict != null)
-//                 Padding(
-//                   padding: const EdgeInsets.only(top: 8),
-//                   child: Text(
-//                     "State: ${_currentState ?? 'Not selected'} | District: ${_currentDistrict ?? 'Not selected'}",
-//                     style: TextStyle(
-//                       color: Colors.white.withOpacity(0.8),
-//                       fontSize: 14,
-//                     ),
-//                     textAlign: TextAlign.center,
-//                   ),
-//                 ),
-//             ],
-//           ),
-//         ),
-//       );
-//     }
-
-//     return ListView.builder(
-//       padding: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
-//       itemCount: _searchResults.length,
-//       itemBuilder: (context, index) {
-//         final result = _searchResults[index];
-
-//         if (result is productSearch.ProductSearchModel) {
-//           return _buildProductCard(result);
-//         }
-
-//         if (result is ShopNearbyModel) {
-//           return _buildShopCard(result);
-//         }
-
-//         return const SizedBox();
-//       },
-//     );
-//   }
-
-//   // Normal content (stores list) when not searching
-//   Widget _buildNormalContent(
-//     ShopNearbyController shopNearbyController,
-//     List<ShopNearbyModel> displayedStores,
-//     List<ShopNearbyModel> allActiveShops,
-//   ) {
-//     return SingleChildScrollView(
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           buildSectionTitle(
-//             "Stores",
-//             _showAllStores || allActiveShops.length <= 6 ? "" : "See all",
-//             () => setState(() => _showAllStores = !_showAllStores),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-//             child:
-//                 shopNearbyController.isLoading
-//                     ? const Center(child: CircularProgressIndicator())
-//                     : allActiveShops.isEmpty
-//                     ? const Center(
-//                       child: AnimatedNoDataMessage(
-//                         titleText:
-//                             "No active shops available at this location!",
-//                         subtitleText:
-//                             "Change your location and continue shopping 🚀",
-//                       ),
-//                     )
-//                     : ListView.builder(
-//                       shrinkWrap: true,
-//                       physics: const NeverScrollableScrollPhysics(),
-//                       itemCount: displayedStores.length,
-//                       itemBuilder: (context, index) {
-//                         final shop = displayedStores[index];
-//                         return InkWell(
-//                           onTap: () {
-//                             Navigator.push(
-//                               context,
-//                               MaterialPageRoute(
-//                                 builder:
-//                                     (context) => ShopProductsScreen(
-//                                       shop: ShopModel(
-//                                         id: shop.id ?? '',
-//                                         shopName: shop.shopName ?? '',
-//                                         headerImage: shop.headerImage,
-//                                         mobileNumber: shop.mobileNumber ?? '',
-//                                         place: shop.place ?? '',
-//                                       ),
-//                                     ),
-//                               ),
-//                             );
-//                           },
-//                           child: _buildShopCard(shop),
-//                         );
-//                       },
-//                     ),
-//           ),
-//           const SizedBox(height: 20),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // Build Shop Card
-//   Widget _buildShopCard(ShopNearbyModel shop) {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 8.0),
-//       child: InkWell(
-//         onTap: () {
-//           Navigator.push(
-//             context,
-//             MaterialPageRoute(
-//               builder:
-//                   (context) => ShopProductsScreen(
-//                     shop: ShopModel(
-//                       id: shop.id ?? '',
-//                       shopName: shop.shopName ?? '',
-//                       headerImage: shop.headerImage,
-//                       mobileNumber: shop.mobileNumber ?? '',
-//                       place: shop.place ?? '',
-//                     ),
-//                   ),
-//             ),
-//           );
-//         },
-//         child: Card(
-//           margin: const EdgeInsets.symmetric(vertical: 6),
-//           elevation: 0,
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(14),
-//             side: BorderSide(color: Colors.grey.shade200, width: 1),
-//           ),
-//           child: Container(
-//             decoration: BoxDecoration(
-//               color: Colors.white,
-//               borderRadius: BorderRadius.circular(14),
-//             ),
-//             child: Padding(
-//               padding: const EdgeInsets.all(12),
-//               child: Row(
-//                 crossAxisAlignment: CrossAxisAlignment.center,
-//                 children: [
-//                   Container(
-//                     width: 72,
-//                     height: 65,
-//                     decoration: BoxDecoration(
-//                       borderRadius: BorderRadius.circular(10),
-//                       gradient: LinearGradient(
-//                         colors: [Colors.orange.shade50, Colors.orange.shade100],
-//                       ),
-//                     ),
-//                     child: ClipRRect(
-//                       borderRadius: BorderRadius.circular(10),
-//                       child:
-//                           (shop.headerImage != null &&
-//                                   shop.headerImage!.isNotEmpty)
-//                               ? Image.network(
-//                                 shop.headerImage!,
-//                                 fit: BoxFit.cover,
-//                                 loadingBuilder: (
-//                                   context,
-//                                   child,
-//                                   loadingProgress,
-//                                 ) {
-//                                   if (loadingProgress == null) return child;
-//                                   return _buildImageLoadingShimmer();
-//                                 },
-//                                 errorBuilder:
-//                                     (context, error, stackTrace) =>
-//                                         _buildShopPlaceholder(),
-//                               )
-//                               : _buildShopPlaceholder(),
-//                     ),
-//                   ),
-//                   const SizedBox(width: 20),
-//                   Expanded(
-//                     flex: 3,
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Text(
-//                           shop.shopName ?? 'Unknown Shop',
-//                           style: const TextStyle(
-//                             fontWeight: FontWeight.w700,
-//                             fontSize: 15,
-//                             color: Colors.black87,
-//                           ),
-//                           maxLines: 1,
-//                           overflow: TextOverflow.ellipsis,
-//                         ),
-//                         const SizedBox(height: 4),
-//                         Text(
-//                           (shop.category ?? []).join(", "),
-//                           style: const TextStyle(
-//                             fontSize: 11,
-//                             color: Colors.black,
-//                             fontWeight: FontWeight.w600,
-//                           ),
-//                           maxLines: 1,
-//                           overflow: TextOverflow.ellipsis,
-//                         ),
-//                         const SizedBox(height: 4),
-//                         Row(
-//                           children: [
-//                             Icon(
-//                               Icons.location_on_rounded,
-//                               size: 13,
-//                               color: Colors.grey.shade600,
-//                             ),
-//                             const SizedBox(width: 4),
-//                             Expanded(
-//                               child: Text(
-//                                 shop.locality?.toString().isNotEmpty == true
-//                                     ? shop.locality.toString()
-//                                     : (shop.place?.isNotEmpty == true
-//                                         ? shop.place!
-//                                         : 'Location not available'),
-//                                 style: TextStyle(
-//                                   fontSize: 12,
-//                                   color: Colors.grey.shade600,
-//                                 ),
-//                                 maxLines: 1,
-//                                 overflow: TextOverflow.ellipsis,
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                   const SizedBox(width: 6),
-//                   Column(
-//                     children: [
-//                       const SizedBox(height: 6),
-//                       Container(
-//                         width: 28,
-//                         height: 28,
-//                         decoration: BoxDecoration(
-//                           color: Colors.orange.shade50,
-//                           shape: BoxShape.circle,
-//                         ),
-//                         child: Icon(
-//                           Icons.arrow_forward_ios_rounded,
-//                           size: 12,
-//                           color: Colors.orange.shade700,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   // Build Product Card
-//   Widget _buildProductCard(productSearch.ProductSearchModel product) {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 8.0),
-//       child: Card(
-//         margin: const EdgeInsets.symmetric(vertical: 6),
-//         elevation: 0,
-//         shape: RoundedRectangleBorder(
-//           borderRadius: BorderRadius.circular(14),
-//           side: BorderSide(color: Colors.grey.shade200, width: 1),
-//         ),
-//         child: InkWell(
-//           onTap: () {
-//             Navigator.push(
-//               context,
-//               MaterialPageRoute(
-//                 builder:
-//                     (context) => ShopProductsScreen(
-//                       shop: ShopModel(
-//                         id: product.shop.id,
-//                         shopName: product.shop.shopName,
-//                         headerImage: product.shop.headerImage,
-//                         mobileNumber: product.shop.mobileNumber,
-//                         place: product.shop.place,
-//                       ),
-//                     ),
-//               ),
-//             );
-//           },
-//           child: Container(
-//             decoration: BoxDecoration(
-//               color: Colors.white,
-//               borderRadius: BorderRadius.circular(14),
-//             ),
-//             child: Padding(
-//               padding: const EdgeInsets.all(12),
-//               child: Row(
-//                 crossAxisAlignment: CrossAxisAlignment.center,
-//                 children: [
-//                   // Product Image
-//                   Container(
-//                     width: 72,
-//                     height: 65,
-//                     decoration: BoxDecoration(
-//                       borderRadius: BorderRadius.circular(10),
-//                       color: Colors.grey.shade100,
-//                     ),
-//                     child: ClipRRect(
-//                       borderRadius: BorderRadius.circular(10),
-//                       child:
-//                           product.productImage.isNotEmpty
-//                               ? Image.network(
-//                                 product.productImage,
-//                                 fit: BoxFit.cover,
-//                                 loadingBuilder: (
-//                                   context,
-//                                   child,
-//                                   loadingProgress,
-//                                 ) {
-//                                   if (loadingProgress == null) return child;
-//                                   return _buildImageLoadingShimmer();
-//                                 },
-//                                 errorBuilder:
-//                                     (context, error, stackTrace) =>
-//                                         _buildProductPlaceholder(),
-//                               )
-//                               : _buildProductPlaceholder(),
-//                     ),
-//                   ),
-//                   const SizedBox(width: 20),
-//                   Expanded(
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Text(
-//                           product.name,
-//                           style: const TextStyle(
-//                             fontWeight: FontWeight.w700,
-//                             fontSize: 15,
-//                             color: Colors.black87,
-//                           ),
-//                           maxLines: 2,
-//                           overflow: TextOverflow.ellipsis,
-//                         ),
-//                         const SizedBox(height: 4),
-//                         Text(
-//                           "by ${product.shop.shopName}",
-//                           style: TextStyle(
-//                             fontSize: 12,
-//                             color: Colors.grey.shade600,
-//                           ),
-//                           maxLines: 1,
-//                           overflow: TextOverflow.ellipsis,
-//                         ),
-//                         const SizedBox(height: 4),
-//                         Row(
-//                           children: [
-//                             Icon(
-//                               Icons.location_on_outlined,
-//                               size: 13,
-//                               color: Colors.grey.shade600,
-//                             ),
-//                             const SizedBox(width: 4),
-//                             Expanded(
-//                               child: Text(
-//                                 product.shop.locality.isNotEmpty
-//                                     ? product.shop.locality
-//                                     : 'Location not available',
-//                                 style: TextStyle(
-//                                   fontSize: 12,
-//                                   color: Colors.grey.shade600,
-//                                 ),
-//                                 maxLines: 1,
-//                                 overflow: TextOverflow.ellipsis,
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                         const SizedBox(height: 4),
-//                         Row(
-//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                           children: [
-//                             Text(
-//                               '₹${product.price}',
-//                               style: const TextStyle(
-//                                 fontWeight: FontWeight.bold,
-//                                 fontSize: 16,
-//                                 color: Colors.green,
-//                               ),
-//                             ),
-//                             Container(
-//                               padding: const EdgeInsets.symmetric(
-//                                 horizontal: 8,
-//                                 vertical: 4,
-//                               ),
-//                               decoration: BoxDecoration(
-//                                 color: Colors.blue.shade50,
-//                                 borderRadius: BorderRadius.circular(8),
-//                               ),
-//                               child: Text(
-//                                 'Product',
-//                                 style: TextStyle(
-//                                   fontSize: 10,
-//                                   color: Colors.blue.shade700,
-//                                   fontWeight: FontWeight.w600,
-//                                 ),
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildProductPlaceholder() {
-//     return Container(
-//       decoration: BoxDecoration(
-//         borderRadius: BorderRadius.circular(10),
-//         gradient: LinearGradient(
-//           colors: [Colors.blue.shade100, Colors.blue.shade200],
-//         ),
-//       ),
-//       child: Column(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           Icon(
-//             Icons.shopping_bag_outlined,
-//             size: 24,
-//             color: Colors.blue.shade600,
-//           ),
-//           const SizedBox(height: 4),
-//           Text(
-//             'Product',
-//             style: TextStyle(
-//               fontSize: 10,
-//               color: Colors.blue.shade700,
-//               fontWeight: FontWeight.w600,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildShopPlaceholder() {
-//     return Container(
-//       decoration: BoxDecoration(
-//         borderRadius: BorderRadius.circular(10),
-//         gradient: LinearGradient(
-//           colors: [Colors.orange.shade100, Colors.orange.shade200],
-//         ),
-//       ),
-//       child: Column(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           Icon(
-//             Icons.store_mall_directory_rounded,
-//             size: 24,
-//             color: Colors.orange.shade600,
-//           ),
-//           const SizedBox(height: 4),
-//           Text(
-//             'Shop',
-//             style: TextStyle(
-//               fontSize: 10,
-//               color: Colors.orange.shade700,
-//               fontWeight: FontWeight.w600,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildImageLoadingShimmer() {
-//     return Container(
-//       decoration: BoxDecoration(
-//         borderRadius: BorderRadius.circular(10),
-//         gradient: LinearGradient(
-//           colors: [
-//             Colors.grey.shade200,
-//             Colors.grey.shade300,
-//             Colors.grey.shade200,
-//           ],
-//         ),
-//       ),
-//       child: const Center(
-//         child: SizedBox(
-//           width: 20,
-//           height: 20,
-//           child: CircularProgressIndicator(
-//             strokeWidth: 2,
-//             valueColor: AlwaysStoppedAnimation<Color>(Colors.deepOrange),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget buildSectionTitle(
-//     String title,
-//     String actionText,
-//     VoidCallback onTap,
-//   ) {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-//       child: Row(
-//         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//         children: [
-//           Text(
-//             title,
-//             style: const TextStyle(
-//               fontSize: 18,
-//               fontWeight: FontWeight.bold,
-//               color: Colors.white,
-//             ),
-//           ),
-//           if (actionText.isNotEmpty)
-//             InkWell(
-//               onTap: onTap,
-//               child: Text(
-//                 actionText,
-//                 style: TextStyle(color: Colors.blue.shade700),
-//               ),
-//             ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-
-
-
-
-

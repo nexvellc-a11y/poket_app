@@ -52,7 +52,7 @@ class ResetPasswordScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        "Enter the token you received and set a new password.",
+                        "Enter the code you received and set a new password.",
                         style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                       const SizedBox(height: 30),
@@ -62,7 +62,7 @@ class ResetPasswordScreen extends StatelessWidget {
                         controller: provider.tokenController,
                         keyboardType: TextInputType.number,
                         validator: provider.validateToken,
-                        decoration: _input("Enter token", Icons.vpn_key),
+                        decoration: _input("Enter code", Icons.vpn_key),
                       ),
 
                       const SizedBox(height: 20),

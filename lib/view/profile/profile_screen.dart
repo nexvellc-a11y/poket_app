@@ -6,6 +6,7 @@ import 'package:poketstore/view/about_app/about_app.dart';
 import 'package:poketstore/view/help/help.dart';
 import 'package:poketstore/view/privacy_and_policy/privacy_policy.dart';
 import 'package:poketstore/view/profile/pocket_coins.dart';
+import 'package:poketstore/view/subscription/subscription_user.dart';
 import 'package:poketstore/view/web_view/web_view.dart';
 import 'package:provider/provider.dart';
 import 'package:poketstore/controllers/login_reg_controller/login_controller.dart';
@@ -248,7 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SubscriptionScreen(),
+                      builder: (context) => SubscriptionUserScreen(),
                     ),
                   );
                 }),

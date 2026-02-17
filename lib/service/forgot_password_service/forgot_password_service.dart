@@ -11,7 +11,7 @@ class ForgotPasswordService {
       log("Sending forgot password request for $email");
 
       final response = await _dio.post(
-        '/auth/user/forgot-password',
+        'https://api.poketstor.com/auth/user/forgot-password',
         data: {"email": email},
       );
 

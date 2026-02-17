@@ -14,7 +14,7 @@ class ResetPasswordService {
       log("Reset password request");
 
       final response = await _dio.post(
-        '/auth/user/reset-password',
+        'https://api.poketstor.com/auth/user/reset-password',
         data: {"token": token, "newPassword": newPassword},
       );
 

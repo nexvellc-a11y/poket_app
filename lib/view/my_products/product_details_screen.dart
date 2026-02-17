@@ -28,6 +28,12 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
   late TextEditingController _unitTypeController;
   late TextEditingController _deliveryOptionController;
 
+  // Fixed aspect ratio for product images
+  static const double _fixedAspectRatioWidth = 1.717;
+  static const double _fixedAspectRatioHeight = 1.533;
+  double get _fixedAspectRatio =>
+      _fixedAspectRatioWidth / _fixedAspectRatioHeight;
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +79,27 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for responsive sizing
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isTablet = screenWidth > 600;
+
+    // Calculate responsive image dimensions with fixed aspect ratio for mobile
+    final imageWidth =
+        isTablet
+            ? screenWidth *
+                0.75 // Tablets use percentage-based width
+            : screenWidth * 0.9; // Mobile uses 90% of screen width
+
+    final imageHeight =
+        isTablet
+            ? screenHeight *
+                0.45 // Tablets use height-based
+            : imageWidth /
+                _fixedAspectRatio; // Mobile uses aspect ratio to calculate height
+
+    final horizontalPadding = screenWidth * 0.05; // 5% padding on each side
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -190,7 +217,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
           if (provider.errorMessage != null) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(horizontalPadding),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -211,7 +238,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                     Text(
                       'Oops!',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: isTablet ? 28 : 24,
                         fontWeight: FontWeight.w600,
                         color: Colors.grey[800],
                       ),
@@ -220,11 +247,15 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                     Text(
                       provider.errorMessage!,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: isTablet ? 18 : 16,
+                      ),
                     ),
                     const SizedBox(height: 24),
-                    Container(
+                    SizedBox(
                       height: 48,
+                      width: isTablet ? 200 : 150,
                       child: ElevatedButton(
                         onPressed:
                             () => provider.fetchProduct(widget.productId),
@@ -264,7 +295,10 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                   const SizedBox(height: 16),
                   Text(
                     'Product Not Found',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 18),
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: isTablet ? 20 : 18,
+                    ),
                   ),
                 ],
               ),
@@ -275,12 +309,16 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center, // Center children
               children: [
-                // Product Image with modern design
+                // Product Image with fixed aspect ratio for mobile
                 Container(
-                  height: 300,
-                  margin: const EdgeInsets.all(16),
+                  width: imageWidth,
+                  height: imageHeight,
+                  margin: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
@@ -299,8 +337,8 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                           product.productImage.isNotEmpty
                               ? product.productImage
                               : 'https://via.placeholder.com/300',
-                          width: double.infinity,
-                          height: double.infinity,
+                          width: imageWidth,
+                          height: imageHeight,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
@@ -331,10 +369,35 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                   ),
                 ),
 
-                // Product Info Card
+                // Aspect ratio indicator for mobile
+                // if (!isTablet)
+                //   Padding(
+                //     padding: const EdgeInsets.only(bottom: 8.0),
+                //     child: Container(
+                //       padding: const EdgeInsets.symmetric(
+                //         horizontal: 12,
+                //         vertical: 4,
+                //       ),
+                //       decoration: BoxDecoration(
+                //         color: Colors.blue[50],
+                //         borderRadius: BorderRadius.circular(20),
+                //       ),
+                //       child: Text(
+                //         'Aspect ratio: ${_fixedAspectRatioWidth.toStringAsFixed(3)} : ${_fixedAspectRatioHeight.toStringAsFixed(3)}',
+                //         style: TextStyle(
+                //           fontSize: 12,
+                //           color: Colors.blue[700],
+                //           fontWeight: FontWeight.w500,
+                //         ),
+                //       ),
+                //     ),
+                //   ),
+
+                // Product Info Card with responsive width
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(20),
+                  width: screenWidth * 0.95,
+                  margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  padding: EdgeInsets.all(isTablet ? 24 : 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -359,8 +422,8 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                               children: [
                                 Text(
                                   product.name,
-                                  style: const TextStyle(
-                                    fontSize: 24,
+                                  style: TextStyle(
+                                    fontSize: isTablet ? 28 : 24,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.black87,
                                   ),
@@ -372,22 +435,10 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                                       : 'N/A',
                                   style: TextStyle(
                                     color: Colors.grey[600],
-                                    fontSize: 16,
+                                    fontSize: isTablet ? 18 : 16,
                                   ),
                                 ),
                               ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.red[50],
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.favorite_border_rounded,
-                              color: Colors.red[400],
-                              size: 24,
                             ),
                           ),
                         ],
@@ -410,14 +461,14 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                               style: TextStyle(
                                 color: Colors.blue[700],
                                 fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                                fontSize: isTablet ? 16 : 14,
                               ),
                             ),
                           ),
                           Text(
                             '₹${product.price}',
-                            style: const TextStyle(
-                              fontSize: 28,
+                            style: TextStyle(
+                              fontSize: isTablet ? 32 : 28,
                               fontWeight: FontWeight.w800,
                               color: Colors.green,
                             ),
@@ -430,10 +481,11 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
 
                 const SizedBox(height: 16),
 
-                // Description Card
+                // Description Card with responsive width
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(20),
+                  width: screenWidth * 0.95,
+                  margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  padding: EdgeInsets.all(isTablet ? 24 : 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -466,7 +518,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                           Text(
                             'Product Description',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: isTablet ? 20 : 18,
                               fontWeight: FontWeight.w600,
                               color: Colors.grey[800],
                             ),
@@ -478,7 +530,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                         product.description ??
                             'No description available for this product.',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: isTablet ? 16 : 15,
                           color: Colors.grey[700],
                           height: 1.5,
                         ),
@@ -489,10 +541,11 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
 
                 const SizedBox(height: 16),
 
-                // Additional Details
+                // Additional Details with responsive width
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(20),
+                  width: screenWidth * 0.95,
+                  margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  padding: EdgeInsets.all(isTablet ? 24 : 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -524,7 +577,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                           Text(
                             'Product Details',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: isTablet ? 20 : 18,
                               fontWeight: FontWeight.w600,
                               color: Colors.grey[800],
                             ),
@@ -537,6 +590,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                         product.estimatedTime ?? 'N/A',
                         Icons.schedule_rounded,
                         Colors.blue,
+                        isTablet,
                       ),
                       const SizedBox(height: 12),
                       _buildModernDetailRow(
@@ -544,6 +598,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                         product.category.isNotEmpty ? product.category : 'N/A',
                         Icons.category_rounded,
                         Colors.green,
+                        isTablet,
                       ),
                       const SizedBox(height: 12),
                       _buildModernDetailRow(
@@ -551,6 +606,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                         product.unitType.isNotEmpty ? product.unitType : 'N/A',
                         Icons.inventory_2_rounded,
                         Colors.purple,
+                        isTablet,
                       ),
                       const SizedBox(height: 12),
                       _buildModernDetailRow(
@@ -560,6 +616,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                             : 'N/A',
                         Icons.local_shipping_rounded,
                         Colors.orange,
+                        isTablet,
                       ),
                     ],
                   ),
@@ -579,9 +636,10 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
     String value,
     IconData icon,
     Color color,
+    bool isTablet,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isTablet ? 20 : 16),
       decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
@@ -594,7 +652,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: isTablet ? 24 : 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -604,7 +662,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: isTablet ? 15 : 14,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),
@@ -612,8 +670,8 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: isTablet ? 18 : 16,
                     color: Colors.black87,
                     fontWeight: FontWeight.w600,
                   ),
@@ -623,7 +681,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
           ),
           Icon(
             Icons.arrow_forward_ios_rounded,
-            size: 16,
+            size: isTablet ? 18 : 16,
             color: Colors.grey[400],
           ),
         ],
@@ -631,8 +689,11 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
     );
   }
 
-  // Edit Dialog with modern design
+  // Edit Dialog with responsive design
   void _showEditDialog(BuildContext context, String productId) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+
     final productProvider = Provider.of<ProductProvider>(
       context,
       listen: false,
@@ -647,6 +708,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
     }
 
     _nameController.text = currentProduct.name;
+    _descriptionController.text = currentProduct.description ?? '';
     _priceController.text = currentProduct.price.toString();
     _quantityController.text = currentProduct.quantity.toString();
     _categoryController.text = currentProduct.category;
@@ -663,299 +725,329 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: StatefulBuilder(
-                  builder: (BuildContext context, StateSetter dialogSetState) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Edit Product",
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: Icon(
-                                Icons.close_rounded,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Center(
-                          child: GestureDetector(
-                            onTap: () => _pickImageForEdit(dialogSetState),
-                            child: Container(
-                              width: 120,
-                              height: 120,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.grey[300]!,
-                                  width: 2,
+            child: Container(
+              width: isTablet ? 600 : screenWidth * 0.95,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.all(isTablet ? 32 : 24),
+                  child: StatefulBuilder(
+                    builder: (
+                      BuildContext context,
+                      StateSetter dialogSetState,
+                    ) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Edit Product",
+                                style: TextStyle(
+                                  fontSize: isTablet ? 26 : 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
                                 ),
-                                color: Colors.grey[50],
                               ),
-                              child:
-                                  _selectedImageForEdit != null
-                                      ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(18),
-                                        child: Image.file(
-                                          _selectedImageForEdit!,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
-                                      : currentProduct.productImage.isNotEmpty
-                                      ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(18),
-                                        child: Image.network(
-                                          currentProduct.productImage,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (
-                                            context,
-                                            error,
-                                            stackTrace,
-                                          ) {
-                                            return Icon(
+                              IconButton(
+                                onPressed: () => Navigator.pop(context),
+                                icon: Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.grey[600],
+                                  size: isTablet ? 28 : 24,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Center(
+                            child: GestureDetector(
+                              onTap: () => _pickImageForEdit(dialogSetState),
+                              child: Container(
+                                width: isTablet ? 150 : 120,
+                                height: isTablet ? 150 : 120,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.grey[300]!,
+                                    width: 2,
+                                  ),
+                                  color: Colors.grey[50],
+                                ),
+                                child:
+                                    _selectedImageForEdit != null
+                                        ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                          child: Image.file(
+                                            _selectedImageForEdit!,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                        : currentProduct.productImage.isNotEmpty
+                                        ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                          child: Image.network(
+                                            currentProduct.productImage,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (
+                                              context,
+                                              error,
+                                              stackTrace,
+                                            ) {
+                                              return Icon(
+                                                Icons.camera_alt_rounded,
+                                                color: Colors.grey[400],
+                                                size: isTablet ? 50 : 40,
+                                              );
+                                            },
+                                          ),
+                                        )
+                                        : Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
                                               Icons.camera_alt_rounded,
                                               color: Colors.grey[400],
-                                              size: 40,
-                                            );
-                                          },
-                                        ),
-                                      )
-                                      : Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.camera_alt_rounded,
-                                            color: Colors.grey[400],
-                                            size: 40,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Add Image',
-                                            style: TextStyle(
-                                              color: Colors.grey[500],
-                                              fontSize: 12,
+                                              size: isTablet ? 50 : 40,
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Add Image',
+                                              style: TextStyle(
+                                                color: Colors.grey[500],
+                                                fontSize: isTablet ? 14 : 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        _buildModernTextField(
-                          _nameController,
-                          "Product Name",
-                          Icons.title_rounded,
-                        ),
-                        _buildModernTextField(
-                          _descriptionController,
-                          "Description",
-                          Icons.description_rounded,
-                          maxLines: 3,
-                        ),
-                        _buildModernTextField(
-                          _priceController,
-                          "Price",
-                          Icons.attach_money_rounded,
-                          keyboardType: TextInputType.number,
-                        ),
-                        _buildModernTextField(
-                          _quantityController,
-                          "Quantity",
-                          Icons.format_list_numbered_rounded,
-                          keyboardType: TextInputType.number,
-                        ),
-                        _buildModernTextField(
-                          _categoryController,
-                          "Category",
-                          Icons.category_rounded,
-                        ),
-                        _buildModernTextField(
-                          _estimatedTimeController,
-                          "Estimated Time",
-                          Icons.schedule_rounded,
-                        ),
-                        _buildModernTextField(
-                          _unitTypeController,
-                          "Product Type",
-                          Icons.inventory_2_rounded,
-                        ),
-                        _buildModernTextField(
-                          _deliveryOptionController,
-                          "Delivery Option",
-                          Icons.local_shipping_rounded,
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => Navigator.pop(context),
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
+                          const SizedBox(height: 24),
+                          _buildModernTextField(
+                            _nameController,
+                            "Product Name",
+                            Icons.title_rounded,
+                            isTablet,
+                          ),
+                          _buildModernTextField(
+                            _descriptionController,
+                            "Description",
+                            Icons.description_rounded,
+                            isTablet,
+                            maxLines: 3,
+                          ),
+                          _buildModernTextField(
+                            _priceController,
+                            "Price",
+                            Icons.attach_money_rounded,
+                            isTablet,
+                            keyboardType: TextInputType.number,
+                          ),
+                          _buildModernTextField(
+                            _quantityController,
+                            "Quantity",
+                            Icons.format_list_numbered_rounded,
+                            isTablet,
+                            keyboardType: TextInputType.number,
+                          ),
+                          _buildModernTextField(
+                            _categoryController,
+                            "Category",
+                            Icons.category_rounded,
+                            isTablet,
+                          ),
+                          _buildModernTextField(
+                            _estimatedTimeController,
+                            "Estimated Time",
+                            Icons.schedule_rounded,
+                            isTablet,
+                          ),
+                          _buildModernTextField(
+                            _unitTypeController,
+                            "Product Type",
+                            Icons.inventory_2_rounded,
+                            isTablet,
+                          ),
+                          _buildModernTextField(
+                            _deliveryOptionController,
+                            "Delivery Option",
+                            Icons.local_shipping_rounded,
+                            isTablet,
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: isTablet ? 18 : 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    side: BorderSide(color: Colors.grey[300]!),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  side: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                child: Text(
-                                  'Cancel',
-                                  style: TextStyle(
-                                    color: Colors.grey[700],
-                                    fontWeight: FontWeight.w600,
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color: Colors.grey[700],
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: isTablet ? 16 : 14,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () async {
-                                  showDialog(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder:
-                                        (context) => Center(
-                                          child: Container(
-                                            padding: const EdgeInsets.all(20),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                            ),
-                                            child: CircularProgressIndicator(
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                    Colors.blue[700]!,
-                                                  ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder:
+                                          (context) => Center(
+                                            child: Container(
+                                              padding: const EdgeInsets.all(20),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              child: CircularProgressIndicator(
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Colors.blue[700]!),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                  );
-
-                                  final List<String> categories =
-                                      _categoryController.text
-                                          .trim()
-                                          .split(',')
-                                          .map((e) => e.trim())
-                                          .where((e) => e.isNotEmpty)
-                                          .toList();
-
-                                  final bool
-                                  success = await productProvider.updateProduct(
-                                    productId,
-                                    productImage: _selectedImageForEdit,
-                                    name: _nameController.text.trim(),
-                                    description:
-                                        _descriptionController.text.trim(),
-                                    price: int.tryParse(
-                                      _priceController.text.trim(),
-                                    ),
-                                    quantity: int.tryParse(
-                                      _quantityController.text.trim(),
-                                    ),
-                                    category:
-                                        categories.isEmpty ? null : categories,
-                                    estimatedTime:
-                                        _estimatedTimeController.text.trim(),
-                                    unitType: _unitTypeController.text.trim(),
-                                    deliveryOption:
-                                        _deliveryOptionController.text.trim(),
-                                  );
-
-                                  if (!mounted) return;
-                                  Navigator.pop(context);
-
-                                  if (success) {
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text(
-                                          'Product updated successfully!',
-                                        ),
-                                        backgroundColor: Colors.green[400],
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                      ),
                                     );
 
-                                    final myShopListProvider =
-                                        Provider.of<MyShopListUserProvider>(
-                                          context,
-                                          listen: false,
+                                    final List<String> categories =
+                                        _categoryController.text
+                                            .trim()
+                                            .split(',')
+                                            .map((e) => e.trim())
+                                            .where((e) => e.isNotEmpty)
+                                            .toList();
+
+                                    final bool success = await productProvider
+                                        .updateProduct(
+                                          productId,
+                                          productImage: _selectedImageForEdit,
+                                          name: _nameController.text.trim(),
+                                          description:
+                                              _descriptionController.text
+                                                  .trim(),
+                                          price: int.tryParse(
+                                            _priceController.text.trim(),
+                                          ),
+                                          quantity: int.tryParse(
+                                            _quantityController.text.trim(),
+                                          ),
+                                          category:
+                                              categories.isEmpty
+                                                  ? null
+                                                  : categories,
+                                          estimatedTime:
+                                              _estimatedTimeController.text
+                                                  .trim(),
+                                          unitType:
+                                              _unitTypeController.text.trim(),
+                                          deliveryOption:
+                                              _deliveryOptionController.text
+                                                  .trim(),
                                         );
-                                    final prefs =
-                                        await SharedPreferences.getInstance();
-                                    final userId = prefs.getString('userId');
-                                    if (userId != null) {
-                                      await myShopListProvider
-                                          .fetchUserShopList(userId);
-                                    }
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          productProvider.errorMessage ??
-                                              'Failed to update product.',
-                                        ),
-                                        backgroundColor: Colors.red[400],
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
+
+                                    if (!mounted) return;
+                                    Navigator.pop(context);
+
+                                    if (success) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                            'Product updated successfully!',
+                                          ),
+                                          backgroundColor: Colors.green[400],
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue[700],
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
+                                      );
+
+                                      final myShopListProvider =
+                                          Provider.of<MyShopListUserProvider>(
+                                            context,
+                                            listen: false,
+                                          );
+                                      final prefs =
+                                          await SharedPreferences.getInstance();
+                                      final userId = prefs.getString('userId');
+                                      if (userId != null) {
+                                        await myShopListProvider
+                                            .fetchUserShopList(userId);
+                                      }
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            productProvider.errorMessage ??
+                                                'Failed to update product.',
+                                          ),
+                                          backgroundColor: Colors.red[400],
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue[700],
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: isTablet ? 18 : 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 0,
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: const Text(
-                                  'Update',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
+                                  child: Text(
+                                    'Update',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: isTablet ? 16 : 14,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -966,7 +1058,8 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
   Widget _buildModernTextField(
     TextEditingController controller,
     String labelText,
-    IconData icon, {
+    IconData icon,
+    bool isTablet, {
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
   }) {
@@ -976,9 +1069,15 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
+        style: TextStyle(fontSize: isTablet ? 16 : 14),
         decoration: InputDecoration(
           labelText: labelText,
-          prefixIcon: Icon(icon, color: Colors.grey[600]),
+          labelStyle: TextStyle(fontSize: isTablet ? 15 : 14),
+          prefixIcon: Icon(
+            icon,
+            color: Colors.grey[600],
+            size: isTablet ? 24 : 20,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey[300]!),
@@ -989,9 +1088,9 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
           ),
           filled: true,
           fillColor: Colors.grey[50],
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 20 : 16,
+            vertical: isTablet ? 16 : 14,
           ),
         ),
       ),
@@ -999,6 +1098,9 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
   }
 
   void _confirmDelete(BuildContext context, String productId) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+
     showDialog(
       context: context,
       builder:
@@ -1007,29 +1109,30 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
+            child: Container(
+              width: isTablet ? 500 : screenWidth * 0.95,
+              padding: EdgeInsets.all(isTablet ? 32 : 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: isTablet ? 100 : 80,
+                    height: isTablet ? 100 : 80,
                     decoration: BoxDecoration(
                       color: Colors.red[50],
-                      borderRadius: BorderRadius.circular(40),
+                      borderRadius: BorderRadius.circular(isTablet ? 50 : 40),
                     ),
                     child: Icon(
                       Icons.delete_forever_rounded,
                       color: Colors.red[400],
-                      size: 40,
+                      size: isTablet ? 50 : 40,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     "Delete Product?",
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: isTablet ? 26 : 22,
                       fontWeight: FontWeight.w700,
                       color: Colors.black87,
                     ),
@@ -1040,7 +1143,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.grey[600],
-                      fontSize: 15,
+                      fontSize: isTablet ? 16 : 15,
                       height: 1.5,
                     ),
                   ),
@@ -1051,7 +1154,9 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                         child: OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding: EdgeInsets.symmetric(
+                              vertical: isTablet ? 16 : 14,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -1062,6 +1167,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                             style: TextStyle(
                               color: Colors.grey[700],
                               fontWeight: FontWeight.w600,
+                              fontSize: isTablet ? 16 : 14,
                             ),
                           ),
                         ),
@@ -1151,17 +1257,19 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red[600],
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding: EdgeInsets.symmetric(
+                              vertical: isTablet ? 16 : 14,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 0,
                           ),
-                          child: const Text(
+                          child: Text(
                             'Delete',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              fontSize: 16,
+                              fontSize: isTablet ? 16 : 14,
                             ),
                           ),
                         ),

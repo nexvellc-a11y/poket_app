@@ -6,16 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 
-class CropImageScreen extends StatefulWidget {
+class CropImageScreenShop extends StatefulWidget {
   final File imageFile;
 
-  const CropImageScreen({super.key, required this.imageFile});
+  const CropImageScreenShop({super.key, required this.imageFile});
 
   @override
-  State<CropImageScreen> createState() => _CropImageScreenState();
+  State<CropImageScreenShop> createState() => _CropImageScreenShopState();
 }
 
-class _CropImageScreenState extends State<CropImageScreen> {
+class _CropImageScreenShopState extends State<CropImageScreenShop> {
   final CropController _cropController = CropController();
   late Uint8List _imageBytes;
   bool _isCropping = false;
@@ -24,9 +24,16 @@ class _CropImageScreenState extends State<CropImageScreen> {
   bool _redoEnabled = false;
   String _statusText = '';
   bool _isImageLoaded = false;
-final double headerWidth = MediaQuery.of(context).size.width;
-final double headerHeight = 260;
-final double headerAspectRatio = headerWidth / headerHeight;
+
+  // Fixed aspect ratio for shop header images
+  static const double _fixedAspectRatioWidth = 3.103;
+  static const double _fixedAspectRatioHeight = 1.353;
+  double get _fixedAspectRatio =>
+      _fixedAspectRatioWidth / _fixedAspectRatioHeight;
+
+  // Fixed header height that matches ShopDetailsWithProductsScreen
+  static const double _headerHeight = 260.0;
+
   @override
   void initState() {
     super.initState();
@@ -69,9 +76,6 @@ final double headerAspectRatio = headerWidth / headerHeight;
   // Function to rotate the image
   Future<void> _rotateImage() async {
     try {
-      // For the crop_your_image package, we need to use a different approach
-      // Since there's no direct rotate method, we'll rotate the image bytes
-      // This is a simple 90-degree clockwise rotation example
       final rotatedBytes = await _rotateImageBytes(_imageBytes, 90);
       setState(() {
         _imageBytes = rotatedBytes;
@@ -92,13 +96,6 @@ final double headerAspectRatio = headerWidth / headerHeight;
 
   // Helper function to rotate image bytes
   Future<Uint8List> _rotateImageBytes(Uint8List bytes, int degrees) async {
-    // This is a simplified version - in a real app, you'd want to use an image processing library
-    // like image or image_picker for proper rotation
-
-    // For now, we'll just reload the original image and let the user know
-    // In production, consider using the `image` package:
-    // import 'package:image/image.dart' as img;
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -107,31 +104,30 @@ final double headerAspectRatio = headerWidth / headerHeight;
         backgroundColor: Colors.blue,
       ),
     );
-
-    // Return original bytes (in real implementation, actually rotate)
     return bytes;
   }
 
-  Future<Uint8List> _compressTo1MB(Uint8List bytes) async {
+  Future<Uint8List> compressTo40KBJpeg(Uint8List bytes) async {
     img.Image? image = img.decodeImage(bytes);
     if (image == null) return bytes;
 
-    // Resize large images (extra safety)
-    if (image.width > 1080) {
-      image = img.copyResize(image, width: 1080);
+    // Resize only if very large (better quality at 40 KB)
+    if (image.width > 900) {
+      image = img.copyResize(image, width: 900);
     }
 
-    int quality = 95;
+    int quality = 90;
     Uint8List result;
 
     do {
       result = Uint8List.fromList(img.encodeJpg(image, quality: quality));
       quality -= 5;
-    } while (result.lengthInBytes > 1024 * 1024 && quality > 10);
+    } while (result.lengthInBytes > 40 * 1024 && quality >= 50);
 
     log(
-      '🖼 Final image size: ${(result.lengthInBytes / 1024 / 1024).toStringAsFixed(2)} MB',
+      '🖼 Final size: ${(result.lengthInBytes / 1024).toStringAsFixed(2)} KB | Quality: ${quality + 5}',
     );
+
     return result;
   }
 
@@ -141,21 +137,18 @@ final double headerAspectRatio = headerWidth / headerHeight;
 
       final tempDir = await getTemporaryDirectory();
       final tempFile = File(
-        '${tempDir.path}/cropped_image_${DateTime.now().millisecondsSinceEpoch}.png',
+        '${tempDir.path}/cropped_image_${DateTime.now().millisecondsSinceEpoch}.jpg',
       );
-      final compressedBytes = await _compressTo1MB(croppedImageBytes);
+      final compressedBytes = await compressTo40KBJpeg(croppedImageBytes);
 
       await tempFile.writeAsBytes(compressedBytes);
 
       _logSuccess(
         'Compressed size: ${(compressedBytes.lengthInBytes / 1024 / 1024).toStringAsFixed(2)} MB',
       );
-      // await tempFile.writeAsBytes(croppedImageBytes);
-      // _logSuccess('Image saved to: ${tempFile.path}');
 
       if (!mounted) return;
 
-      // Show the preview bottom sheet
       await _showPreviewBottomSheet(tempFile);
     } catch (e, stackTrace) {
       _logError('Failed to save cropped image', e, stackTrace);
@@ -213,14 +206,11 @@ final double headerAspectRatio = headerWidth / headerHeight;
                         ),
                       ),
                       Expanded(
-                        // FIX: Wrap the entire content in Expanded
                         child: SingleChildScrollView(
-                          // FIX: Add SingleChildScrollView
                           child: Padding(
                             padding: const EdgeInsets.all(20),
                             child: Column(
-                              mainAxisSize:
-                                  MainAxisSize.min, // FIX: Changed to min
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Text(
                                   'Crop Preview',
@@ -232,7 +222,7 @@ final double headerAspectRatio = headerWidth / headerHeight;
                                 ),
                                 const SizedBox(height: 16),
                                 const Text(
-                                  'Check your cropped image before proceeding',
+                                  'This is how your header will look',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey,
@@ -240,10 +230,9 @@ final double headerAspectRatio = headerWidth / headerHeight;
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 20),
-                                // FIX: Removed Expanded and used Container with fixed height
+                                // Preview with exact header dimensions
                                 Container(
-                                  height:
-                                      300, // FIX: Fixed height instead of Expanded
+                                  height: _headerHeight,
                                   width: double.infinity,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(15),
@@ -260,43 +249,77 @@ final double headerAspectRatio = headerWidth / headerHeight;
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(15),
-                                    child: Image.file(
-                                      croppedImage,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (
-                                        context,
-                                        error,
-                                        stackTrace,
-                                      ) {
-                                        return Center(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              const Icon(
-                                                Icons.error,
-                                                color: Colors.red,
-                                                size: 50,
-                                              ),
-                                              const SizedBox(height: 10),
-                                              const Text(
-                                                'Failed to load preview',
-                                                style: TextStyle(
-                                                  color: Colors.red,
-                                                ),
-                                              ),
-                                              TextButton(
-                                                onPressed:
-                                                    () => Navigator.pop(
-                                                      context,
-                                                      true,
+                                    child: Stack(
+                                      children: [
+                                        Image.file(
+                                          croppedImage,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: _headerHeight,
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            return Center(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.error,
+                                                    color: Colors.red,
+                                                    size: 50,
+                                                  ),
+                                                  const SizedBox(height: 10),
+                                                  const Text(
+                                                    'Failed to load preview',
+                                                    style: TextStyle(
+                                                      color: Colors.red,
                                                     ),
-                                                child: const Text('Try Again'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed:
+                                                        () => Navigator.pop(
+                                                          context,
+                                                          true,
+                                                        ),
+                                                    child: const Text(
+                                                      'Try Again',
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
+                                            );
+                                          },
+                                        ),
+                                        // Grid overlay for preview
+                                        if (_overlayVisible)
+                                          CustomPaint(
+                                            painter: FixedGridPainter(
+                                              aspectRatio: _fixedAspectRatio,
+                                            ),
+                                            size: Size(
+                                              MediaQuery.of(context).size.width,
+                                              _headerHeight,
+                                            ),
                                           ),
-                                        );
-                                      },
+                                        // Gradient overlay for better text visibility
+                                        Positioned.fill(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Colors.transparent,
+                                                  Colors.black.withOpacity(0.3),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -399,16 +422,16 @@ final double headerAspectRatio = headerWidth / headerHeight;
     );
 
     if (result == true) {
-      // User wants to re-crop
       return;
     } else if (result == false) {
-      // User wants to continue with this crop
       if (mounted) Navigator.pop(context, croppedImage);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.grey[50],
@@ -446,6 +469,7 @@ final double headerAspectRatio = headerWidth / headerHeight;
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
+                      // Crop area with exact header dimensions
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(15),
@@ -460,89 +484,94 @@ final double headerAspectRatio = headerWidth / headerHeight;
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(15),
                           child: SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.5,
+                            width: double.infinity,
+                            height: _headerHeight,
                             child: Crop(
                               controller: _cropController,
                               image: _imageBytes,
-                              aspectRatio: headerAspectRatio,
+
+                              // Fixed aspect ratio for shop header
+                              aspectRatio: _fixedAspectRatio,
+
+                              // 🔥 DISABLE MOVEMENT 🔥
+                              interactive: false,
+
+                              withCircleUi: false,
+
+                              baseColor: Colors.black.withOpacity(0.7),
+                              maskColor: Colors.black.withOpacity(0.5),
+
                               onCropped: (result) async {
                                 switch (result) {
                                   case CropSuccess(:final croppedImage):
                                     await _handleCroppedImage(croppedImage);
                                   case CropFailure(:final cause):
                                     _logError('Cropping failed: $cause');
-                                    if (mounted) {
-                                      setState(() => _isCropping = false);
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Crop failed: $cause'),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                    }
                                 }
                               },
-                              aspectRatio: headerAspectRatio,
 
-                              withCircleUi: false,
-                              interactive: true,
+                              overlayBuilder:
+                                  _overlayVisible
+                                      ? (context, rect) => SizedBox(
+                                        width: double.infinity,
+                                        height: _headerHeight,
+                                        child: CustomPaint(
+                                          painter: FixedGridPainter(
+                                            aspectRatio: _fixedAspectRatio,
+                                          ),
+                                        ),
+                                      )
+                                      : null,
+
                               cornerDotBuilder:
                                   (size, edgeAlignment) => Container(
-                                    width: 24,
-                                    height: 24,
+                                    width: 20,
+                                    height: 20,
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       border: Border.all(
                                         color: const Color(0xFF0703C9),
                                         width: 2,
                                       ),
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          blurRadius: 4,
-                                          spreadRadius: 1,
-                                        ),
-                                      ],
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
-                              baseColor: Colors.black.withOpacity(0.7),
-                              maskColor: Colors.black.withOpacity(0.5),
+
                               onHistoryChanged: (history) {
-                                if (mounted) {
-                                  setState(() {
-                                    _undoEnabled = history.undoCount > 0;
-                                    _redoEnabled = history.redoCount > 0;
-                                  });
-                                }
+                                setState(() {
+                                  _undoEnabled = history.undoCount > 0;
+                                  _redoEnabled = history.redoCount > 0;
+                                });
                               },
-                              onStatusChanged: (status) {
-                                if (mounted) {
-                                  setState(() {
-                                    _statusText =
-                                        {
-                                          CropStatus.nothing: 'No image loaded',
-                                          CropStatus.loading:
-                                              'Loading image...',
-                                          CropStatus.ready: 'Ready to crop!',
-                                          CropStatus.cropping: 'Cropping...',
-                                        }[status] ??
-                                        '';
-                                  });
-                                }
-                              },
-                              overlayBuilder:
-                                  _overlayVisible
-                                      ? (context, rect) =>
-                                          CustomPaint(painter: GridPainter())
-                                      : null,
                             ),
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 20),
+
+                      // Info text
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0703C9).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Fixed aspect ratio: ${_fixedAspectRatioWidth.toStringAsFixed(3)} : ${_fixedAspectRatioHeight.toStringAsFixed(3)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF0703C9),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
                       // Status and Controls Section
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -573,6 +602,7 @@ final double headerAspectRatio = headerWidth / headerHeight;
                               ),
                             ),
                             const SizedBox(height: 12),
+
                             // Controls Row
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -602,6 +632,7 @@ final double headerAspectRatio = headerWidth / headerHeight;
                                   ),
                                 ),
                                 const SizedBox(width: 8),
+
                                 // Redo Button
                                 Tooltip(
                                   message: 'Redo',
@@ -627,6 +658,7 @@ final double headerAspectRatio = headerWidth / headerHeight;
                                   ),
                                 ),
                                 const SizedBox(width: 20),
+
                                 // Grid Toggle
                                 Container(
                                   padding: const EdgeInsets.symmetric(
@@ -671,7 +703,9 @@ final double headerAspectRatio = headerWidth / headerHeight;
                                 ),
                               ],
                             ),
+
                             const SizedBox(height: 16),
+
                             // Crop Button
                             SizedBox(
                               width: double.infinity,
@@ -766,10 +800,14 @@ final double headerAspectRatio = headerWidth / headerHeight;
   }
 }
 
-class GridPainter extends CustomPainter {
-  final int divisions = 3; // Changed to 3x3 grid
+// Custom grid painter for fixed aspect ratio
+class FixedGridPainter extends CustomPainter {
+  final double aspectRatio;
+  final int divisions = 3;
   final double strokeWidth = 1.0;
   final Color color = Colors.white.withOpacity(0.7);
+
+  FixedGridPainter({required this.aspectRatio});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -806,8 +844,34 @@ class GridPainter extends CustomPainter {
           ..style = PaintingStyle.stroke;
 
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), borderPaint);
+
+    // Draw aspect ratio text
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: '${aspectRatio.toStringAsFixed(3)}:1',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          shadows: [
+            Shadow(color: Colors.black, blurRadius: 2, offset: Offset(1, 1)),
+          ],
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+
+    // Position text at bottom right corner
+    final offset = Offset(
+      size.width - textPainter.width - 10,
+      size.height - textPainter.height - 10,
+    );
+    textPainter.paint(canvas, offset);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant FixedGridPainter oldDelegate) {
+    return oldDelegate.aspectRatio != aspectRatio;
+  }
 }

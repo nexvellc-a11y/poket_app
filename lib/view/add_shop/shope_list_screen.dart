@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:poketstore/controllers/shop_of_user_controller/shop_of_user_controller.dart';
 import 'package:poketstore/model/add_shope_model/add_shop_model.dart';
+import 'package:poketstore/model/shop_of_user_model/shop_of_user_model.dart';
 import 'package:poketstore/utilities/custom_app_bar.dart';
 import 'package:poketstore/view/add_shop/add_shop.dart';
 import 'package:poketstore/view/add_shop/shop_under_product_screen.dart';
 import 'package:poketstore/utilities/no_data_warning.dart';
 import 'package:provider/provider.dart';
+
+// Assuming ShopOfUser is a different model. If it has the same fields, we can map it.
 
 class ShopListScreen extends StatefulWidget {
   const ShopListScreen({super.key});
@@ -15,6 +18,97 @@ class ShopListScreen extends StatefulWidget {
 }
 
 class _ShopListScreenState extends State<ShopListScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  // Responsive breakpoints
+  static const double _mobileBreakpoint = 600;
+  static const double _tabletBreakpoint = 900;
+  static const double _desktopBreakpoint = 1200;
+
+  bool get _isSmallMobile => MediaQuery.of(context).size.width < 375;
+  bool get _isMobile => MediaQuery.of(context).size.width < _mobileBreakpoint;
+  bool get _isTablet =>
+      MediaQuery.of(context).size.width >= _mobileBreakpoint &&
+      MediaQuery.of(context).size.width < _tabletBreakpoint;
+  bool get _isLargeTablet =>
+      MediaQuery.of(context).size.width >= _tabletBreakpoint &&
+      MediaQuery.of(context).size.width < _desktopBreakpoint;
+  bool get _isDesktop =>
+      MediaQuery.of(context).size.width >= _desktopBreakpoint;
+
+  // Responsive sizing - INCREASED HEIGHT VALUES
+  double get _cardHeight {
+    if (_isSmallMobile) return 100.0; // Increased from 70 to 100
+    if (_isMobile) return 120.0; // Increased from 80 to 120
+    if (_isTablet) return 150.0; // Increased from 100 to 150
+    return 180.0; // Increased from 120 to 180
+  }
+
+  double get _cardPadding {
+    if (_isSmallMobile) return 8.0;
+    if (_isMobile) return 12.0;
+    if (_isTablet) return 16.0;
+    return 20.0;
+  }
+
+  double get _iconSize {
+    if (_isSmallMobile) return 32.0; // Increased from 24 to 32
+    if (_isMobile) return 40.0; // Increased from 28 to 40
+    if (_isTablet) return 50.0; // Increased from 36 to 50
+    return 60.0; // Increased from 44 to 60
+  }
+
+  double get _titleFontSize {
+    if (_isSmallMobile) return 16.0; // Increased from 14 to 16
+    if (_isMobile) return 18.0; // Increased from 16 to 18
+    if (_isTablet) return 20.0; // Increased from 18 to 20
+    return 22.0; // Increased from 20 to 22
+  }
+
+  double get _subtitleFontSize {
+    if (_isSmallMobile) return 12.0; // Increased from 11 to 12
+    if (_isMobile) return 14.0; // Increased from 12 to 14
+    if (_isTablet) return 16.0; // Increased from 14 to 16
+    return 18.0; // Increased from 16 to 18
+  }
+
+  double get _buttonHeight {
+    if (_isSmallMobile) return 55.0; // Increased from 45 to 55
+    if (_isMobile) return 60.0; // Increased from 50 to 60
+    if (_isTablet) return 70.0; // Increased from 55 to 70
+    return 75.0; // Increased from 60 to 75
+  }
+
+  double get _buttonFontSize {
+    if (_isSmallMobile) return 16.0; // Increased from 14 to 16
+    if (_isMobile) return 18.0; // Increased from 16 to 18
+    if (_isTablet) return 20.0; // Increased from 18 to 20
+    return 22.0; // Increased from 20 to 22
+  }
+
+  double get _imageIconSize {
+    if (_isSmallMobile) return 50.0; // New: specific size for empty state icon
+    if (_isMobile) return 70.0;
+    if (_isTablet) return 100.0;
+    return 120.0;
+  }
+
+  double get _headerImageSize {
+    if (_isSmallMobile) return 60.0;
+    if (_isMobile) return 80.0;
+    if (_isTablet) return 100.0;
+    return 120.0;
+  }
+
+  EdgeInsets get _screenPadding {
+    if (_isSmallMobile)
+      return const EdgeInsets.symmetric(horizontal: 12.0); // Increased from 8
+    if (_isMobile)
+      return const EdgeInsets.symmetric(horizontal: 16.0); // Increased from 12
+    if (_isTablet) return const EdgeInsets.symmetric(horizontal: 24.0);
+    return const EdgeInsets.symmetric(horizontal: 32.0);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -24,7 +118,16 @@ class _ShopListScreenState extends State<ShopListScreen> {
   }
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -35,416 +138,494 @@ class _ShopListScreenState extends State<ShopListScreen> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: CustomAppBar(title: "My Shops", showBackButton: false),
-        body: Container(
-          // decoration: const BoxDecoration(
-          //   gradient: LinearGradient(
-          //     begin: Alignment.topCenter,
-          //     end: Alignment.bottomCenter,
-          //     colors: [Color(0xFF0703C9), Colors.white],
-          //   ),
-          // ),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text(
+            "My Shops",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          centerTitle: true,
+          leading: Container(),
+          automaticallyImplyLeading: false,
+        ),
+        body: SafeArea(
           child: Column(
             children: [
-              // Search bar
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              //   child: TextField(
-              //     decoration: InputDecoration(
-              //       hintText: "Search products or shop names...",
-              //       prefixIcon: Icon(Icons.search),
-              //       border: OutlineInputBorder(
-              //         borderRadius: BorderRadius.circular(12),
-              //       ),
-              //       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              //     ),
-              //   ),
-              // ),
+              // Header stats
+              if (!_isSmallMobile)
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: _screenPadding.horizontal,
+                    vertical:
+                        _isMobile ? 12.0 : 16.0, // Increased vertical padding
+                  ),
+                  child: Consumer<ShopOfUserProvider>(
+                    builder: (context, shopProvider, _) {
+                      return Row(
+                        children: [
+                          _buildStatCard(
+                            icon: Icons.storefront_outlined,
+                            value: shopProvider.shopList.length.toString(),
+                            label: "Shops",
+                            color: Colors.blue,
+                          ),
+                          SizedBox(
+                            width: _isMobile ? 12.0 : 16.0,
+                          ), // Increased spacing
+                          _buildStatCard(
+                            icon: Icons.location_on_outlined,
+                            value:
+                                shopProvider.shopList
+                                    .where((shop) => shop.place.isNotEmpty)
+                                    .length
+                                    .toString(),
+                            label: "Locations",
+                            color: Colors.green,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
 
               // Grid content
               Expanded(
-                child: Consumer<ShopOfUserProvider>(
-                  builder: (context, shopProvider, _) {
-                    if (shopProvider.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (shopProvider.shopList.isEmpty) {
-                      return RefreshIndicator(
-                        onRefresh: () => shopProvider.fetchUserShops(),
-                        child: Center(
-                          child: SingleChildScrollView(
-                            physics: AlwaysScrollableScrollPhysics(),
-                            child: AnimatedNoDataMessage(
-                              titleText: "No shops available yet!",
-                              subtitleText: "Add Your Shop !!!.",
-                            ),
-                            // Container(
-                            //   decoration: BoxDecoration(
-                            //     color:
-                            //         Colors
-                            //             .blue
-                            //             .shade50, // A very light blue background
-                            //     border: Border.all(
-                            //       color:
-                            //           Colors
-                            //               .blue
-                            //               .shade300, // A nice, soft blue border
-                            //       width: 2,
-                            //     ),
-                            //     borderRadius: BorderRadius.circular(
-                            //       10,
-                            //     ), // Rounded corners
-                            //   ),
-                            //   padding: const EdgeInsets.all(20),
-                            //   child: Column(
-                            //     mainAxisSize:
-                            //         MainAxisSize
-                            //             .min, // Make the column size to its content
-                            //     children: [
-                            //       Icon(
-                            //         Icons
-                            //             .store_mall_directory_outlined, // A shop icon
-                            //         color: Colors.blue.shade700,
-                            //         size: 50,
-                            //       ),
-                            //       const SizedBox(height: 10), // Spacing
-                            //       const Text(
-                            //         "No shops available.",
-                            //         style: TextStyle(
-                            //           fontSize: 18,
-                            //           fontWeight: FontWeight.bold,
-                            //           color: Colors.black87,
-                            //         ),
-                            //         textAlign: TextAlign.center,
-                            //       ),
-                            //       const SizedBox(height: 5), // Spacing
-                            //       const Text(
-                            //         "Tap '+' to add your first shop!",
-                            //         style: TextStyle(
-                            //           fontSize: 16,
-                            //           color: Colors.black54,
-                            //         ),
-                            //         textAlign: TextAlign.center,
-                            //       ),
-                            //     ],
-                            //   ),
-                            // ),
-                            // Text(
-                            //   "No shops available. Tap '+' to add your first shop!",
-                            //   style: TextStyle(fontSize: 16, color: Colors.black),
-                            //   textAlign: TextAlign.center,
-                            // ),
-                          ),
-                        ),
-                      );
-                    }
-
-                    return RefreshIndicator(
-                      onRefresh: () => shopProvider.fetchUserShops(),
-                      child: GridView.builder(
-                        padding: const EdgeInsets.all(10),
-                        itemCount: shopProvider.shopList.length,
-                        // Adjust crossAxisCount and childAspectRatio for a wider, list-like appearance
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              // Using 1 for a list-like appearance in a GridView
-                              crossAxisCount: 1,
-                              // Adjust aspect ratio to make the card flat (wide and short)
-                              childAspectRatio: 3.5,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                            ),
-                        itemBuilder: (context, index) {
-                          final shop = shopProvider.shopList[index];
-                          return InkWell(
-                            onTap: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (_) => ShopDetailsWithProductsScreen(
-                                        shop: ShopModel(
-                                          id: shop.id,
-                                          shopName: shop.shopName,
-                                          headerImage: shop.headerImage,
-                                          place: shop.place,
-                                        ),
-                                      ),
-                                ),
-                              );
-                              if (result == true) {
-                                shopProvider.fetchUserShops();
-                              }
-                            },
-                            child: Card(
-                              // Use Card for the elevated, rounded effect
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: _screenPadding.horizontal,
+                  ),
+                  child: Consumer<ShopOfUserProvider>(
+                    builder: (context, shopProvider, _) {
+                      if (shopProvider.isLoading) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                strokeWidth: 3.0, // Increased stroke width
+                                color: colorScheme.primary,
                               ),
-                              color:
-                                  Colors.white, // Light purple background color
-                              elevation: 2, // Add some shadow
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                  vertical: 12.0,
+                              SizedBox(height: _cardPadding * 1.5),
+                              Text(
+                                "Loading shops...",
+                                style: TextStyle(
+                                  fontSize: _subtitleFontSize,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                child: Row(
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      if (shopProvider.shopList.isEmpty) {
+                        return RefreshIndicator(
+                          onRefresh: () => shopProvider.fetchUserShops(),
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height *
+                                    0.15, // Increased from 0.1
+                              ),
+                              Center(
+                                child: Column(
                                   children: [
-                                    // Shop Icon (Left side)
-                                    Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child:
-                                          shop.headerImage != null &&
-                                                  shop.headerImage!.isNotEmpty
-                                              ? ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                child: Image.network(
-                                                  shop.headerImage!,
-                                                  width: 24,
-                                                  height: 24,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) {
-                                                    // Fallback icon if image fails to load
-                                                    return const Icon(
-                                                      Icons.storefront_outlined,
-                                                      color: Color(0xFF6750A4),
-                                                      size: 24,
-                                                    );
-                                                  },
-                                                  loadingBuilder: (
-                                                    context,
-                                                    child,
-                                                    loadingProgress,
-                                                  ) {
-                                                    if (loadingProgress == null)
-                                                      return child;
-                                                    return const SizedBox(
-                                                      width: 24,
-                                                      height: 24,
-                                                      child: CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                        valueColor:
-                                                            AlwaysStoppedAnimation(
-                                                              Color(0xFF6750A4),
-                                                            ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              )
-                                              : const Icon(
-                                                Icons.storefront_outlined,
-                                                color: Color(0xFF6750A4),
-                                                size: 24,
-                                              ),
+                                    Icon(
+                                      Icons.store_mall_directory_outlined,
+                                      size: _imageIconSize,
+                                      color: Colors.blue.withOpacity(0.5),
                                     ),
-                                    const SizedBox(width: 16),
-                                    // Text Content (Right side)
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            shop.shopName, // Abcd
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color:
-                                                  Colors
-                                                      .black, // Dark text color
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const Text(
-                                            "Shop", // "Shop" label
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color:
-                                                  Colors
-                                                      .black54, // Lighter gray for secondary text
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          // Row(
-                                          //   children: [
-                                          //     const Icon(
-                                          //       Icons.location_on_outlined,
-                                          //       color: Color(
-                                          //         0xFF6750A4,
-                                          //       ), // Purple location icon
-                                          //       size: 16,
-                                          //     ),
-                                          //     const SizedBox(width: 4),
-                                          // Text(
-                                          //   // Ternary operator to display "Unknown location" if shop.place is null/empty
-                                          //   shop.place.isNotEmpty
-                                          //       ? shop.place
-                                          //       : "Unknown location",
-                                          //   style: const TextStyle(
-                                          //     fontSize: 12,
-                                          //     color: Color.fromARGB(
-                                          //       255,
-                                          //       7,
-                                          //       3,
-                                          //       201,
-                                          //     ), // Purple text color for location
-                                          //     fontWeight: FontWeight.bold,
-                                          //   ),
-                                          //   maxLines: 1,
-                                          //   overflow: TextOverflow.ellipsis,
-                                          // ),
-                                          //   ],
-                                          // ),
-                                        ],
+                                    SizedBox(height: _cardPadding * 2),
+                                    Text(
+                                      "No shops available yet!",
+                                      style: TextStyle(
+                                        fontSize: _titleFontSize * 1.2,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: _cardPadding),
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: _screenPadding.horizontal,
+                                      ),
+                                      child: Text(
+                                        "Tap the button below to add your first shop",
+                                        style: TextStyle(
+                                          fontSize: _subtitleFontSize,
+                                          color: Colors.grey[600],
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
-                                    // Arrow (Far right)
-                                    const Icon(
-                                      Icons.chevron_right,
-                                      color: Colors.black54,
-                                    ),
+                                    SizedBox(height: _cardPadding * 2),
                                   ],
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
+                            ],
+                          ),
+                        );
+                      }
+
+                      return RefreshIndicator(
+                        onRefresh: () => shopProvider.fetchUserShops(),
+                        child: _buildShopList(shopProvider),
+                      );
+                    },
+                  ),
                 ),
               ),
 
+              // Add Shop Button
               Padding(
-                padding: const EdgeInsets.all(15),
-                child: GestureDetector(
-                  onTap: () async {
-                    final bool? didAddShop = await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AddShop()),
-                    );
-                    if (didAddShop == true) {
-                      Provider.of<ShopOfUserProvider>(
-                        // ignore: use_build_context_synchronously
-                        context,
-                        listen: false,
-                      ).fetchUserShops();
-                    }
-                  },
-                  child: Container(
-                    height: 50,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 84, 82, 204),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Add Shop',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Icon(Icons.add, color: Colors.white),
-                      ],
-                    ),
-                  ),
-                ),
+                padding: EdgeInsets.all(
+                  _cardPadding * 1.5,
+                ), // Increased padding
+                child: _buildAddShopButton(),
               ),
             ],
           ),
         ),
-
-        // // Two buttons at the bottom
-        // floatingActionButton: Padding(
-        //   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-        //   child: Row(
-        //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //     children: [
-        //       Expanded(
-        //         child: SizedBox(
-        //           height: 40,
-        //           child: ElevatedButton.icon(
-        //             onPressed: () async {
-        //               final bool? didAddShop = await Navigator.push(
-        //                 context,
-        //                 MaterialPageRoute(builder: (_) => const AddShop()),
-        //               );
-        //               if (didAddShop == true) {
-        //                 Provider.of<ShopOfUserProvider>(
-        //                   context,
-        //                   listen: false,
-        //                 ).fetchUserShops();
-        //               }
-        //             },
-        //             icon: const Icon(Icons.store, color: Colors.white),
-        //             label: const Text(
-        //               "Add New Shop",
-        //               style: TextStyle(color: Colors.white, fontSize: 13),
-        //             ),
-        //             style: ElevatedButton.styleFrom(
-        //               backgroundColor: const Color.fromARGB(255, 7, 3, 201),
-        //               shape: RoundedRectangleBorder(
-        //                 borderRadius: BorderRadius.circular(30),
-        //               ),
-        //               elevation: 0,
-        //             ),
-        //           ),
-        //         ),
-        //       ),
-        //       const SizedBox(width: 16),
-        //       Expanded(
-        //         child: SizedBox(
-        //           height: 40,
-        //           child: ElevatedButton.icon(
-        //             onPressed: () {
-        //               Navigator.push(
-        //                 context,
-        //                 MaterialPageRoute(builder: (_) => const MyShopScreen()),
-        //               );
-        //             },
-        //             icon: const Icon(
-        //               Icons.add_shopping_cart,
-        //               color: Colors.white,
-        //             ),
-        //             label: const Text(
-        //               "Add Product",
-        //               style: TextStyle(color: Colors.white, fontSize: 13),
-        //             ),
-        //             style: ElevatedButton.styleFrom(
-        //               backgroundColor: Colors.green,
-        //               shape: RoundedRectangleBorder(
-        //                 borderRadius: BorderRadius.circular(30),
-        //               ),
-        //               elevation: 0,
-        //             ),
-        //           ),
-        //         ),
-        //       ),
-        //     ],
-        //   ),
-        // ),
-        // floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
     );
   }
+
+  Widget _buildStatCard({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.all(_isMobile ? 12.0 : 16.0), // Increased padding
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.95),
+          borderRadius: BorderRadius.circular(_cardPadding),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(
+                _isMobile ? 8.0 : 10.0,
+              ), // Increased padding
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: _iconSize * 0.8,
+                color: color,
+              ), // Increased icon size
+            ),
+            SizedBox(width: _isMobile ? 10.0 : 12.0), // Increased spacing
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: _titleFontSize,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 2), // Added small spacing
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: _subtitleFontSize * 0.9,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShopList(ShopOfUserProvider shopProvider) {
+    return ListView.builder(
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(),
+      itemCount: shopProvider.shopList.length,
+      itemBuilder: (context, index) {
+        final shop = shopProvider.shopList[index];
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: _cardPadding * 1.2,
+          ), // Increased bottom padding
+          child: _buildShopCard(shop),
+        );
+      },
+    );
+  }
+
+  Widget _buildShopCard(dynamic shop) {
+    // Extract values safely - adjust field names based on your ShopOfUser model
+    String shopName = '';
+    String? headerImage;
+    String? place;
+    String? id;
+
+    // Check if it's ShopOfUser model and extract fields
+    if (shop is ShopOfUser) {
+      shopName = shop.shopName ?? '';
+      headerImage = shop.headerImage;
+      place = shop.place;
+      id = shop.id;
+    } else if (shop is ShopModel) {
+      shopName = shop.shopName ?? '';
+      headerImage = shop.headerImage;
+      place = shop.place;
+      id = shop.id;
+    }
+
+    return InkWell(
+      onTap: () async {
+        if (id != null && id.isNotEmpty) {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (_) => ShopDetailsWithProductsScreen(
+                    shop: ShopModel(
+                      id: id,
+                      shopName: shopName,
+                      headerImage: headerImage,
+                      place: place,
+                    ),
+                  ),
+            ),
+          );
+          if (result == true) {
+            Provider.of<ShopOfUserProvider>(
+              context,
+              listen: false,
+            ).fetchUserShops();
+          }
+        }
+      },
+      borderRadius: BorderRadius.circular(_cardPadding),
+      child: Container(
+        height: _cardHeight,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(_cardPadding),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Shop Image/Icon - with increased size
+            Padding(
+              padding: EdgeInsets.all(_cardPadding * 1.2), // Increased padding
+              child: Container(
+                width: _iconSize,
+                height: _iconSize,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6750A4).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(_cardPadding),
+                ),
+                child:
+                    headerImage != null && headerImage.isNotEmpty
+                        ? ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            _cardPadding * 0.7,
+                          ),
+                          child: Image.network(
+                            headerImage,
+                            width: _iconSize,
+                            height: _iconSize,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.storefront_outlined,
+                                size: _iconSize * 0.7,
+                                color: const Color(0xFF6750A4),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: const AlwaysStoppedAnimation(
+                                    Color(0xFF6750A4),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                        : Center(
+                          child: Icon(
+                            Icons.storefront_outlined,
+                            size: _iconSize * 0.7,
+                            color: const Color(0xFF6750A4),
+                          ),
+                        ),
+              ),
+            ),
+
+            // Shop Details - with better spacing
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  vertical: _cardPadding,
+                  horizontal: _cardPadding * 0.5,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      shopName.isNotEmpty ? shopName : 'Unnamed Shop',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: _titleFontSize,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: _cardPadding * 0.3), // Added spacing
+                    // Location
+                    if (place != null && place.isNotEmpty)
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: _iconSize * 0.5,
+                            color: Colors.grey[600],
+                          ),
+                          SizedBox(width: _cardPadding * 0.25),
+                          Expanded(
+                            child: Text(
+                              place,
+                              style: TextStyle(
+                                fontSize: _subtitleFontSize * 0.9,
+                                color: Colors.grey[600],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                    if (!place.isNullOrEmpty)
+                      SizedBox(
+                        height: _cardPadding * 0.3,
+                      ), // Conditional spacing
+                    // Hint text
+                    if (!_isSmallMobile)
+                      Text(
+                        "Tap to view products",
+                        style: TextStyle(
+                          fontSize: _subtitleFontSize * 0.8,
+                          color: Colors.grey[500],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Arrow Indicator
+            Padding(
+              padding: EdgeInsets.only(right: _cardPadding * 1.2),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: _iconSize * 0.9,
+                color: Colors.grey[400],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddShopButton() {
+    return GestureDetector(
+      onTap: () async {
+        final bool? didAddShop = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddShop()),
+        );
+        if (didAddShop == true) {
+          Provider.of<ShopOfUserProvider>(
+            context,
+            listen: false,
+          ).fetchUserShops();
+        }
+      },
+      child: Container(
+        height: _buttonHeight,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0703C9), Color(0xFF5452CC)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(_cardPadding * 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0703C9).withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add, color: Colors.white, size: _iconSize * 0.8),
+            SizedBox(width: _cardPadding * 0.8),
+            Text(
+              'Add Shop',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: _buttonFontSize,
+                fontWeight: FontWeight.w600,
+                letterSpacing:
+                    0.5, // Added letter spacing for better readability
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Extension for null safety check
+extension StringExtension on String? {
+  bool get isNullOrEmpty => this == null || this!.isEmpty;
 }

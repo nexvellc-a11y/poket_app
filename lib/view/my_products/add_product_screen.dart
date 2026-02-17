@@ -6,7 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:poketstore/controllers/my_shope_controller/add_product_controller.dart';
 import 'package:poketstore/controllers/shop_of_user_controller/shop_of_user_controller.dart';
 import 'package:poketstore/controllers/category_controller/category_controller.dart';
-import 'package:poketstore/utilities/image_crop_screen.dart';
+import 'package:poketstore/utilities/image_crop_product.dart';
+import 'package:poketstore/utilities/image_crop_screen_shop.dart';
 import 'package:poketstore/view/subscription/subscription.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -126,7 +127,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
           context,
           MaterialPageRoute(
             builder:
-                (context) => CropImageScreen(imageFile: File(pickedFile.path)),
+                (context) =>
+                    CropImageScreenProduct(imageFile: File(pickedFile.path)),
           ),
         );
         if (croppedImage != null && croppedImage is File) {
@@ -155,7 +157,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
           context,
           MaterialPageRoute(
             builder:
-                (context) => CropImageScreen(imageFile: File(pickedFile.path)),
+                (context) =>
+                    CropImageScreenProduct(imageFile: File(pickedFile.path)),
           ),
         );
         if (croppedImage != null && croppedImage is File) {

@@ -19,6 +19,25 @@ class ShopProductsScreen extends StatefulWidget {
 
 class _ShopProductsScreenState extends State<ShopProductsScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  // Fixed aspect ratio for shop header images
+  static const double _fixedAspectRatioWidth = 3.103;
+  static const double _fixedAspectRatioHeight = 1.353;
+  double get _fixedAspectRatio =>
+      _fixedAspectRatioWidth / _fixedAspectRatioHeight;
+
+  // Responsive breakpoints
+  static const double _mobileBreakpoint = 600;
+  static const double _tabletBreakpoint = 900;
+  static const double _desktopBreakpoint = 1200;
+
+  bool get _isMobile => MediaQuery.of(context).size.width < _mobileBreakpoint;
+  bool get _isTablet =>
+      MediaQuery.of(context).size.width >= _mobileBreakpoint &&
+      MediaQuery.of(context).size.width < _tabletBreakpoint;
+  bool get _isDesktop =>
+      MediaQuery.of(context).size.width >= _desktopBreakpoint;
 
   @override
   void initState() {
@@ -42,6 +61,7 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -56,48 +76,140 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
+        return Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.phone_in_talk, size: 40, color: Colors.green),
-              const SizedBox(height: 16),
-              Text("Call Shop?", style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(
-                "Do you want to call this shop now?",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 20),
-
-              // Call Button
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _makePhoneCall(phone);
-                },
-                icon: const Icon(Icons.call),
-                label: Text("Call $phone"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              // Phone icon with background
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.phone_in_talk,
+                  size: 40,
+                  color: Colors.green,
                 ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
 
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cancel"),
+              // Title
+              Text(
+                "Call Shop?",
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Description
+              Text(
+                "Do you want to call this shop now?",
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Phone number display
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.phone_rounded,
+                      size: 20,
+                      color: Colors.green,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      phone,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              // Action buttons
+              Row(
+                children: [
+                  // Cancel button
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  // Call button
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _makePhoneCall(phone);
+                      },
+                      icon: const Icon(Icons.call, size: 20),
+                      label: Text(
+                        "Call",
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -121,15 +233,16 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      // backgroundColor: Colors.white70,
       body: CustomScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // Modern SliverAppBar with gradient
+          // SliverAppBar with responsive expanded height based on aspect ratio
           SliverAppBar(
-            expandedHeight: 240.0,
+            expandedHeight: _getAppBarHeight(),
             floating: true,
             pinned: true,
             snap: false,
@@ -139,34 +252,57 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.parallax,
               background: _buildAppBarBackground(colorScheme),
-              titlePadding: const EdgeInsets.only(left: 16.0, bottom: 12.0),
+              titlePadding: const EdgeInsets.only(left: 12.0, bottom: 6.0),
               title: _buildShopInfo(),
             ),
             leading: _buildBackButton(colorScheme),
-            // actions: [
-            //   IconButton(
-            //     icon: const Icon(Icons.share_outlined),
-            //     onPressed: () {},
-            //     color: Colors.white,
-            //   ),
-            //   IconButton(
-            //     icon: const Icon(Icons.more_vert_outlined),
-            //     onPressed: () {},
-            //     color: Colors.white,
-            //   ),
-            // ],
           ),
+
+          // Aspect ratio indicator for mobile
+          // if (_isMobile)
+          //   SliverToBoxAdapter(
+          //     child: Padding(
+          //       padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+          //       child: Center(
+          //         child: Container(
+          //           padding: const EdgeInsets.symmetric(
+          //             horizontal: 12,
+          //             vertical: 4,
+          //           ),
+          //           decoration: BoxDecoration(
+          //             color: Colors.blue[50],
+          //             borderRadius: BorderRadius.circular(20),
+          //           ),
+          //           child: Text(
+          //             'Header ratio: ${_fixedAspectRatioWidth.toStringAsFixed(3)} : ${_fixedAspectRatioHeight.toStringAsFixed(3)}',
+          //             style: TextStyle(
+          //               fontSize: 12,
+          //               color: Colors.blue[700],
+          //               fontWeight: FontWeight.w500,
+          //             ),
+          //           ),
+          //         ),
+          //       ),
+          //     ),
+          //   ),
 
           // Search Bar
           SliverPersistentHeader(
             pinned: true,
             delegate: _SearchBarDelegate(
+              maxHeight: _getSearchBarHeight(),
+              minHeight: _getSearchBarHeight(),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.fromLTRB(
+                  _isMobile ? 16 : 24,
+                  16,
+                  _isMobile ? 16 : 24,
+                  8,
+                ),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(_getBorderRadius()),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.05),
@@ -185,9 +321,9 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
                         color: colorScheme.primary,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: _isMobile ? 20 : 24,
+                        vertical: _isMobile ? 16 : 20,
                       ),
                       suffixIcon:
                           _searchController.text.isNotEmpty
@@ -195,12 +331,15 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
                                 icon: Icon(
                                   Icons.clear_rounded,
                                   color: Colors.grey[500],
+                                  size: _isMobile ? 20 : 24,
                                 ),
                                 onPressed: () => _searchController.clear(),
                               )
                               : null,
                     ),
-                    style: textTheme.bodyLarge,
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontSize: _isMobile ? 16 : 18,
+                    ),
                   ),
                 ),
               ),
@@ -213,9 +352,21 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
               if (controller.isLoading) {
                 return SliverFillRemaining(
                   child: Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: colorScheme.primary,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Loading products...",
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -234,13 +385,16 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
               }
 
               return SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: EdgeInsets.symmetric(
+                  horizontal: _isMobile ? 16 : 24,
+                  vertical: 8,
+                ),
                 sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.7,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: _getCrossAxisCount(),
+                    crossAxisSpacing: _isMobile ? 16 : 20,
+                    mainAxisSpacing: _isMobile ? 16 : 20,
+                    childAspectRatio: _getChildAspectRatio(),
                   ),
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final product = productsToDisplay[index];
@@ -260,7 +414,44 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
     );
   }
 
-  // Method now accepts colorScheme as parameter
+  // Responsive app bar height with fixed aspect ratio for mobile
+  double _getAppBarHeight() {
+    if (_isMobile) {
+      // For mobile, use aspect ratio to calculate height
+      final screenWidth = MediaQuery.of(context).size.width;
+      return screenWidth / _fixedAspectRatio;
+    }
+    if (_isTablet) return 180.0;
+    return 220.0;
+  }
+
+  // Responsive search bar height
+  double _getSearchBarHeight() {
+    if (_isMobile) return 80.0;
+    return 88.0;
+  }
+
+  // Responsive border radius
+  double _getBorderRadius() {
+    if (_isMobile) return 16.0;
+    if (_isTablet) return 18.0;
+    return 20.0;
+  }
+
+  // Responsive grid columns
+  int _getCrossAxisCount() {
+    if (_isMobile) return 2;
+    if (_isTablet) return 3;
+    return 4;
+  }
+
+  // Responsive card aspect ratio
+  double _getChildAspectRatio() {
+    if (_isMobile) return 0.87;
+    if (_isTablet) return 0.75;
+    return 0.8;
+  }
+
   Widget _buildAppBarBackground(ColorScheme colorScheme) {
     return Container(
       decoration: BoxDecoration(
@@ -275,231 +466,131 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
           ],
         ),
       ),
-      child:
-      // Image.asset('assets/shop.jpeg', fit: BoxFit.cover),
-      Image.network(
+      child: Image.network(
         widget.shop.headerImage?.isNotEmpty == true
             ? widget.shop.headerImage!
             : 'https://via.placeholder.com/400x200?text=No+Image',
-        fit: BoxFit.cover,
+        fit: BoxFit.cover, // Changed from BoxFit.cover to maintain aspect ratio
         errorBuilder:
             (_, __, ___) => Container(
               color: Colors.grey.shade300,
-              child: const Icon(Icons.store, size: 60, color: Colors.grey),
+              child: Icon(
+                Icons.store_mall_directory_rounded,
+                size: _isMobile ? 60 : 80,
+                color: Colors.grey.shade400,
+              ),
             ),
       ),
-      // Image.asset(
-      //   'assets/shop.jpeg',
-      //   fit: BoxFit.cover,
-      //   color: colorScheme.primary.withOpacity(0.4),
-      //   colorBlendMode: BlendMode.multiply,
-      // ),
-      // widget.shop.headerImage?.isNotEmpty == true
-      //     ? Image.network(
-      //       widget.shop.headerImage!,
-      //       fit: BoxFit.cover,
-      //       color: colorScheme.primary.withOpacity(0.4),
-      //       colorBlendMode: BlendMode.multiply,
-      //     )
-      //     : null,
     );
   }
-  // Replace your previous _buildAppBarBackground with this:
-  // Widget _buildAppBarBackground(ColorScheme colorScheme) {
-  //   return AnimatedContainer(
-  //     duration: const Duration(milliseconds: 600),
-  //     curve: Curves.easeInOut,
-  //     decoration: BoxDecoration(
-  //       gradient: LinearGradient(
-  //         colors: [
-  //           colorScheme.primary.withOpacity(0.95),
-  //           colorScheme.primary.withOpacity(0.85),
-  //         ],
-  //         begin: Alignment.topCenter,
-  //         end: Alignment.bottomCenter,
-  //       ),
-  //     ),
-  //     child: Stack(
-  //       alignment: Alignment.center,
-  //       children: [
-  //         // Soft glowing background circles
-  //         Positioned(
-  //           top: -20,
-  //           left: -20,
-  //           child: _glowCircle(120, colorScheme.primary),
-  //         ),
-  //         Positioned(
-  //           bottom: -30,
-  //           right: -20,
-  //           child: _glowCircle(150, colorScheme.primary),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
-  // Replace your previous _glowCircle with this (uses BoxShadow properly)
-  // Widget _glowCircle(double size, Color color) {
-  //   return AnimatedContainer(
-  //     duration: const Duration(milliseconds: 800),
-  //     width: size,
-  //     height: size,
-  //     decoration: BoxDecoration(
-  //       shape: BoxShape.circle,
-  //       color: color.withOpacity(0.18),
-  //       boxShadow: [
-  //         BoxShadow(
-  //           color: color.withOpacity(0.22),
-  //           blurRadius: 30,
-  //           spreadRadius: 10,
-  //           offset: const Offset(0, 8),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildShopInfo() {
-  //   return Container(
-  //     constraints: const BoxConstraints(maxWidth: 300),
-  //     child: Column(
-  //       mainAxisSize: MainAxisSize.min,
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Text(
-  //           widget.shop.shopName ?? 'Shop Name N/A',
-  //           style: const TextStyle(
-  //             fontSize: 20,
-  //             fontWeight: FontWeight.w700,
-  //             color: Colors.white,
-  //             shadows: [
-  //               Shadow(
-  //                 blurRadius: 8,
-  //                 color: Colors.black26,
-  //                 offset: Offset(1, 1),
-  //               ),
-  //             ],
-  //           ),
-  //           maxLines: 2,
-  //           overflow: TextOverflow.ellipsis,
-  //         ),
-  //         const SizedBox(height: 4),
-  //         if (widget.shop.mobileNumber?.isNotEmpty == true)
-  //           Row(
-  //             children: [
-  //               Icon(Icons.phone_rounded, size: 14, color: Colors.white70),
-  //               const SizedBox(width: 4),
-  //               Text(
-  //                 widget.shop.mobileNumber!,
-  //                 style: TextStyle(
-  //                   fontSize: 12,
-  //                   color: Colors.white.withOpacity(0.9),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         if (widget.shop.place?.isNotEmpty == true)
-  //           Row(
-  //             children: [
-  //               Icon(
-  //                 Icons.location_on_rounded,
-  //                 size: 14,
-  //                 color: Colors.white70,
-  //               ),
-  //               const SizedBox(width: 4),
-  //               Expanded(
-  //                 child: Text(
-  //                   widget.shop.place!,
-  //                   style: TextStyle(
-  //                     fontSize: 12,
-  //                     color: Colors.white.withOpacity(0.9),
-  //                   ),
-  //                   maxLines: 1,
-  //                   overflow: TextOverflow.ellipsis,
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //       ],
-  //     ),
-  //   );
-  // }
   Widget _buildShopInfo() {
     return Align(
-      alignment: Alignment.bottomLeft, // ⬅️ Move everything to bottom-left
+      alignment: Alignment.bottomLeft,
       child: Padding(
-        padding: const EdgeInsets.only(left: 20, bottom: 24), // spacing
+        padding: EdgeInsets.only(
+          left: _isMobile ? 16 : 24,
+          bottom: _isMobile ? 14 : 18,
+        ),
+
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start, // ⬅️ Align text left
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Shop Name
-            Text(
-              widget.shop.shopName ?? "Shop Name",
-              textAlign: TextAlign.left,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                height: 1.1,
-                shadows: [
-                  Shadow(
-                    blurRadius: 10,
-                    color: Colors.black54,
-                    offset: Offset(1, 1),
-                  ),
-                ],
+            Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.7,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-
-            const SizedBox(height: 10),
-
-            // Phone + Tap to Call
-            if (widget.shop.mobileNumber?.isNotEmpty == true)
-              InkWell(
-                onTap:
-                    () => _showCallConfirmation(
-                      context,
-                      widget.shop.mobileNumber!,
-                    ),
-                borderRadius: BorderRadius.circular(6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.phone, size: 14, color: Colors.white70),
-                    const SizedBox(width: 6),
-                    Text(
-                      "${widget.shop.mobileNumber!}  •  Tap to Call",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white70,
-                      ),
+              child: Text(
+                widget.shop.shopName ?? "Shop Name",
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  fontSize: _isMobile ? 18 : 20,
+                  height: 1.0,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  shadows: const [
+                    Shadow(
+                      blurRadius: 10,
+                      color: Colors.black54,
+                      offset: Offset(1, 1),
                     ),
                   ],
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
+            ),
 
-            const SizedBox(height: 5),
+            const SizedBox(height: 12),
 
-            // Location
-            if (widget.shop.place?.isNotEmpty == true)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.location_on,
-                    size: 14,
-                    color: Colors.white70,
+            // Contact and Location Info
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Phone Number
+                if (widget.shop.mobileNumber?.isNotEmpty == true)
+                  InkWell(
+                    onTap:
+                        () => _showCallConfirmation(
+                          context,
+                          widget.shop.mobileNumber!,
+                        ),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.phone_rounded,
+                          size: _isMobile ? 14 : 16,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "${widget.shop.mobileNumber!}  •  Tap to Call",
+                          style: TextStyle(
+                            fontSize: _isMobile ? 12 : 13,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    widget.shop.place!,
-                    style: const TextStyle(fontSize: 13, color: Colors.white70),
+
+                if (widget.shop.mobileNumber?.isNotEmpty == true &&
+                    widget.shop.place?.isNotEmpty == true)
+                  const SizedBox(height: 2),
+
+                // Location
+                if (widget.shop.place?.isNotEmpty == true)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: _isMobile ? 16 : 18,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.6,
+                        ),
+                        child: Text(
+                          widget.shop.place!,
+                          style: TextStyle(
+                            fontSize: _isMobile ? 13 : 15,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+              ],
+            ),
           ],
         ),
       ),
@@ -509,12 +600,12 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
   Widget _buildBackButton(ColorScheme colorScheme) {
     return IconButton(
       icon: Container(
-        padding: const EdgeInsets.all(6),
+        padding: EdgeInsets.all(_isMobile ? 6 : 8),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.arrow_back_rounded, size: 20),
+        child: Icon(Icons.arrow_back_rounded, size: _isMobile ? 20 : 24),
       ),
       onPressed: () => Navigator.pop(context),
     );
@@ -526,7 +617,7 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
       children: [
         Icon(
           isSearching ? Icons.search_off_rounded : Icons.inventory_2_outlined,
-          size: 80,
+          size: _isMobile ? 80 : 100,
           color: Colors.grey[300],
         ),
         const SizedBox(height: 20),
@@ -535,23 +626,48 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
               ? "No results for '${_searchController.text}'"
               : "No products available",
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+            fontSize: _isMobile ? 16 : 18,
+            fontWeight: FontWeight.w600,
             color: Colors.grey[600],
           ),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        Text(
-          isSearching
-              ? "Try searching with different keywords"
-              : "Check back later for new arrivals",
-          style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: _isMobile ? 32 : 48),
+          child: Text(
+            isSearching
+                ? "Try searching with different keywords"
+                : "Check back later for new arrivals",
+            style: TextStyle(
+              fontSize: _isMobile ? 14 : 16,
+              color: Colors.grey[500],
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
+        if (!isSearching) ...[
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed:
+                () => _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                ),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text("Refresh"),
+            style: OutlinedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
 
-  // Method now accepts colorScheme, textTheme, and context as parameters
   Widget _buildProductCard(
     dynamic product,
     ColorScheme colorScheme,
@@ -560,7 +676,9 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
   ) {
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_getBorderRadius()),
+      ),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -572,29 +690,31 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
             ),
           );
         },
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(_getBorderRadius()),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey[200]!),
+            borderRadius: BorderRadius.circular(_getBorderRadius()),
+            border: Border.all(
+              color: Colors.grey[200]!,
+              width: _isMobile ? 0.5 : 1,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Product Image
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(_getBorderRadius()),
                 ),
                 child: Container(
-                  height: 130,
+                  height: _getProductImageHeight(),
                   width: double.infinity,
-                  color: Colors.grey[100],
+                  color: Colors.grey[50],
                   child:
                       product.productImage?.isNotEmpty == true
                           ? ExtendedImage.network(
-                            // Use product.productImage instead of widget.shop.headerImage
-                            product.productImage!, // Now this is safe
+                            product.productImage!,
                             fit: BoxFit.cover,
                             cache: true,
                             enableLoadState: false,
@@ -602,7 +722,7 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
                               switch (state.extendedImageLoadState) {
                                 case LoadState.loading:
                                   return Container(
-                                    color: Colors.grey[100],
+                                    color: Colors.grey[50],
                                     child: Center(
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
@@ -621,46 +741,62 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
                 ),
               ),
 
-              // Product Details
+              // Product Details - REDUCED HEIGHT AND SPACING
               Padding(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(_isMobile ? 8 : 12), // Reduced padding
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min, // Minimize height
                   children: [
+                    // Product Name
                     Text(
                       product.name ?? 'Unknown Product',
                       style: textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        height: 1.4,
+                        fontSize: _isMobile ? 13 : 15, // Slightly smaller font
+                        height: 1.2, // Tighter line height
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+
+                    // Reduced spacing between name and price
+                    const SizedBox(height: 4), // Reduced from 8 to 4
+                    // Price and Action
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          product.price != null && product.price! > 0
-                              ? '₹${product.price!.toStringAsFixed(0)}'
-                              : '₹ N/A',
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.primary,
+                        // Price
+                        Expanded(
+                          child: Text(
+                            product.price != null && product.price! > 0
+                                ? '₹${product.price!.toStringAsFixed(0)}'
+                                : '₹ N/A',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: _isMobile ? 14 : 16, // Slightly smaller
+                              color: colorScheme.primary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+
+                        // View Icon - More compact
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: _isMobile ? 6 : 8, // Reduced horizontal
+                            vertical: _isMobile ? 2 : 4, // Reduced vertical
                           ),
                           decoration: BoxDecoration(
                             color: colorScheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(
+                              6,
+                            ), // Slightly smaller radius
                           ),
                           child: Icon(
-                            Icons.shopping_bag_outlined,
-                            size: 16,
+                            Icons.visibility_outlined,
+                            size: _isMobile ? 14 : 16, // Smaller icon
                             color: colorScheme.primary,
                           ),
                         ),
@@ -676,18 +812,35 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
     );
   }
 
+  // Also update the product image height to be slightly smaller
+  double _getProductImageHeight() {
+    if (_isMobile) return 110; // Reduced from 130
+    if (_isTablet) return 130; // Reduced from 150
+    return 160; // Reduced from 180
+  }
+
   Widget _buildPlaceholderImage() {
     return Center(
-      child: Icon(Icons.image_outlined, size: 50, color: Colors.grey[300]),
+      child: Icon(
+        Icons.image_outlined,
+        size: _isMobile ? 50 : 60,
+        color: Colors.grey[300],
+      ),
     );
   }
 }
 
-// Custom delegate for sticky search bar
+// Enhanced custom delegate for sticky search bar
 class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
+  final double maxHeight;
+  final double minHeight;
 
-  _SearchBarDelegate({required this.child});
+  _SearchBarDelegate({
+    required this.child,
+    required this.maxHeight,
+    required this.minHeight,
+  });
 
   @override
   Widget build(
@@ -698,18 +851,23 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
     return Material(
       color: Colors.transparent,
       elevation: shrinkOffset > 0 ? 2 : 0,
-      child: child,
+      child: Container(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: child,
+      ),
     );
   }
 
   @override
-  double get maxExtent => 72;
+  double get maxExtent => maxHeight;
 
   @override
-  double get minExtent => 72;
+  double get minExtent => minHeight;
 
   @override
   bool shouldRebuild(covariant _SearchBarDelegate oldDelegate) {
-    return child != oldDelegate.child;
+    return child != oldDelegate.child ||
+        maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight;
   }
 }

@@ -12,7 +12,7 @@ import 'package:poketstore/controllers/product_search_controller/district_search
 import 'package:poketstore/controllers/product_search_controller/state_search_controller.dart';
 import 'package:poketstore/model/add_shope_model/add_shop_model.dart';
 import 'package:poketstore/model/my_shope_model/shope_details_model.dart';
-import 'package:poketstore/utilities/image_crop_screen.dart';
+import 'package:poketstore/utilities/image_crop_screen_shop.dart';
 import 'package:poketstore/view/add_shop/widget/capitalization.dart';
 import 'package:poketstore/view/subscription/subscription.dart';
 import 'package:provider/provider.dart';
@@ -1173,7 +1173,8 @@ class _AddShopState extends State<AddShop> {
           context,
           MaterialPageRoute(
             builder:
-                (context) => CropImageScreen(imageFile: File(pickedFile.path)),
+                (context) =>
+                    CropImageScreenShop(imageFile: File(pickedFile.path)),
           ),
         );
         if (croppedImage != null && croppedImage is File) {
@@ -1200,7 +1201,8 @@ class _AddShopState extends State<AddShop> {
           context,
           MaterialPageRoute(
             builder:
-                (context) => CropImageScreen(imageFile: File(pickedFile.path)),
+                (context) =>
+                    CropImageScreenShop(imageFile: File(pickedFile.path)),
           ),
         );
         if (croppedImage != null && croppedImage is File) {

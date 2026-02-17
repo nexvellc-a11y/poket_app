@@ -7,7 +7,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(),
+      // appBar: CustomAppBar(),
       body: Container(
         color: Colors.grey[100],
         child: SingleChildScrollView(

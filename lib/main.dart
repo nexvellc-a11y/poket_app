@@ -3,6 +3,7 @@ import 'dart:developer'; // Used for logging purposes, like in debugging
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart'; // Core Firebase services initialization
 import 'package:flutter/material.dart'; // Flutter's Material Design widgets
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:poketstore/controllers/add_shop_controller/add_shop_controller.dart';
 import 'package:poketstore/controllers/add_shop_controller/all_shop_controller.dart';
 import 'package:poketstore/controllers/address_controller/address_controller.dart';
@@ -40,6 +41,7 @@ import 'package:poketstore/controllers/shop_nearby_controller/shop_nearby_contro
 import 'package:poketstore/controllers/shop_nearby_controller/shop_product_nearby_controller.dart';
 import 'package:poketstore/controllers/subscription_controller/start_plan_controller.dart';
 import 'package:poketstore/controllers/subscription_controller/subscription_controller.dart';
+import 'package:poketstore/controllers/subscription_controller/user_shop_list_controller.dart';
 import 'package:poketstore/controllers/user_profile_controller/user_profile_controller.dart';
 import 'package:poketstore/firebase_options.dart';
 import 'package:poketstore/network/dio_network_service.dart';
@@ -137,6 +139,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AdvertisementController()),
         ChangeNotifierProvider(create: (_) => StateController()),
         ChangeNotifierProvider(create: (_) => DistrictController()),
+        ChangeNotifierProvider(create: (_) => UserShopListController()),
       ],
       // The root widget of the application.
       child: const MyApp(),
@@ -198,11 +201,15 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Defines the material app, setting the splash screen as the initial home.
-    return MaterialApp(
-      debugShowCheckedModeBanner:
-          false, // Hides the debug banner in release mode
-      home: SplashScreen(), // Sets the SplashScreen as the first screen
+    return ScreenUtilInit(
+      // 🔑 Base size = your Figma / design size
+      designSize: const Size(375, 812), // iPhone X baseline (BEST PRACTICE)
+      minTextAdapt: true,
+      splitScreenMode: true, // ✅ Important for tablets & foldables
+      builder: (context, child) {
+        return MaterialApp(debugShowCheckedModeBanner: false, home: child);
+      },
+      child: const SplashScreen(),
     );
   }
 }

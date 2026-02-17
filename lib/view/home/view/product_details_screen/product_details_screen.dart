@@ -26,6 +26,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   final TextEditingController _gramsController = TextEditingController();
   double _finalQuantity = 1.0;
 
+  // Fixed aspect ratio for product images
+  static const double _fixedAspectRatioWidth = 1.717;
+  static const double _fixedAspectRatioHeight = 1.533;
+  double get _fixedAspectRatio =>
+      _fixedAspectRatioWidth / _fixedAspectRatioHeight;
+
+  // Responsive breakpoints
+  static const double _mobileBreakpoint = 600;
+  static const double _tabletBreakpoint = 900;
+
+  bool get _isMobile => MediaQuery.of(context).size.width < _mobileBreakpoint;
+  bool get _isTablet =>
+      MediaQuery.of(context).size.width >= _mobileBreakpoint &&
+      MediaQuery.of(context).size.width < _tabletBreakpoint;
+  bool get _isDesktop => MediaQuery.of(context).size.width >= _tabletBreakpoint;
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +68,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.grey[100],
@@ -67,27 +85,79 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               return const Center(child: Text('No product found'));
             }
 
+            // Calculate image dimensions based on aspect ratio for mobile
+            double imageWidth =
+                _isMobile ? screenWidth * 0.9 : screenWidth * 0.8;
+            double imageHeight =
+                _isMobile
+                    ? imageWidth /
+                        _fixedAspectRatio // Height from aspect ratio
+                    : 280; // Fixed height for tablets/desktop
+
             return SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.network(
-                          product.productImage,
-                          height: 280, // Use the same height
-                          width: double.infinity, // Use the same width
-                          fit: BoxFit.cover, // Use the same fit
+                    // Product Image with responsive dimensions
+                    Center(
+                      child: Container(
+                        width: imageWidth,
+                        height: imageHeight,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.network(
+                            product.productImage,
+                            width: imageWidth,
+                            height: imageHeight,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    size: 50,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),
+
+                    // Aspect ratio indicator for mobile
+                    // if (_isMobile)
+                    //   Padding(
+                    //     padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                    //     child: Center(
+                    //       child: Container(
+                    //         padding: const EdgeInsets.symmetric(
+                    //           horizontal: 12,
+                    //           vertical: 4,
+                    //         ),
+                    //         // decoration: BoxDecoration(
+                    //         //   color: Colors.blue[50],
+                    //         //   borderRadius: BorderRadius.circular(20),
+                    //         // ),
+                    //         // child: Text(
+                    //         //   'Image ratio: ${_fixedAspectRatioWidth.toStringAsFixed(3)} : ${_fixedAspectRatioHeight.toStringAsFixed(3)}',
+                    //         //   style: TextStyle(
+                    //         //     fontSize: 12,
+                    //         //     color: Colors.blue[700],
+                    //         //     fontWeight: FontWeight.w500,
+                    //         //   ),
+                    //         // ),
+                    //       ),
+                    //     ),
+                    //   ),
                     const SizedBox(height: 16),
 
                     Row(
@@ -96,46 +166,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         Expanded(
                           child: Text(
                             product.name,
-                            style: const TextStyle(
-                              fontSize: 22,
-
+                            style: TextStyle(
+                              fontSize: _isMobile ? 20 : 22,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        // Consumer<FavoriteProvider>(
-                        //   builder: (context, favProvider, _) {
-                        //     final isFav = favProvider.favorites.any(
-                        //       (f) => f.id == product.id,
-                        //     );
-                        //     return IconButton(
-                        //       icon: Icon(
-                        //         isFav ? Icons.favorite : Icons.favorite_border,
-                        //         color: isFav ? Colors.red : Colors.grey,
-                        //       ),
-                        //       onPressed: () async {
-                        //         String message;
-                        //         if (isFav) {
-                        //           await favProvider.removeFromFavorite(
-                        //             product.id,
-                        //           );
-                        //           message = 'Removed from favorites';
-                        //         } else {
-                        //           await favProvider.addToFavorite(product.id);
-                        //           message = 'Added to favorites';
-                        //         }
-                        //         // ignore: duplicate_ignore
-                        //         // ignore: use_build_context_synchronously
-                        //         ScaffoldMessenger.of(context).showSnackBar(
-                        //           SnackBar(
-                        //             content: Text(message),
-                        //             duration: const Duration(seconds: 1),
-                        //           ),
-                        //         );
-                        //       },
-                        //     );
-                        //   },
-                        // ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -146,8 +182,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         Chip(label: Text(product.unitType)),
                         Text(
                           '₹${product.price.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 24,
+                          style: TextStyle(
+                            fontSize: _isMobile ? 22 : 24,
                             fontWeight: FontWeight.bold,
                             color: Colors.green,
                           ),
@@ -180,7 +216,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                     Text(
                       product.description ?? '',
-                      style: TextStyle(color: Colors.grey[700]),
+                      style: TextStyle(
+                        fontSize: _isMobile ? 14 : 15,
+                        color: Colors.grey[700],
+                      ),
                       textAlign: TextAlign.justify,
                     ),
                     const Divider(height: 30),
@@ -212,7 +251,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               child: Text(
                                 '$_selectedQuantity',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 18),
+                                style: TextStyle(fontSize: _isMobile ? 16 : 18),
                               ),
                             ),
                             IconButton(
@@ -239,6 +278,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   border: OutlineInputBorder(),
                                 ),
                                 keyboardType: TextInputType.number,
+                                style: TextStyle(fontSize: _isMobile ? 14 : 16),
                                 onChanged: (kgValue) {
                                   final kg = int.tryParse(kgValue) ?? 0;
                                   final g =
@@ -256,6 +296,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   border: OutlineInputBorder(),
                                 ),
                                 keyboardType: TextInputType.number,
+                                style: TextStyle(fontSize: _isMobile ? 14 : 16),
                                 onChanged: (gValue) {
                                   final kg =
                                       int.tryParse(_kgController.text) ?? 0;
@@ -269,7 +310,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                     const SizedBox(height: 20),
 
-                    // New Total Amount Display
+                    // Total Amount Display
                     Consumer<ProductProvider>(
                       builder: (context, provider, _) {
                         final product = provider.product!;
@@ -300,8 +341,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               ),
                               Text(
                                 '₹${totalAmount.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 18,
+                                style: TextStyle(
+                                  fontSize: _isMobile ? 16 : 18,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.green,
                                 ),
@@ -324,21 +365,25 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       'Estimated Delivery',
                       product.estimatedTime ?? '',
                       Icons.access_time,
+                      _isMobile,
                     ),
                     _buildInfoRow(
                       'Category',
                       product.category.toString(),
                       Icons.category,
+                      _isMobile,
                     ),
                     _buildInfoRow(
                       'Product Type',
                       product.unitType,
                       Icons.shopping_bag,
+                      _isMobile,
                     ),
                     _buildInfoRow(
                       'Delivery Option',
                       product.deliveryOption,
                       Icons.delivery_dining,
+                      _isMobile,
                     ),
 
                     const SizedBox(height: 30),
@@ -414,8 +459,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                       inCart
                                           ? 'Added (${currentQuantity.toStringAsFixed(2)})'
                                           : 'Add to Cart',
-                                      style: const TextStyle(
-                                        fontSize: 18,
+                                      style: TextStyle(
+                                        fontSize: _isMobile ? 16 : 18,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -434,20 +479,34 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  Widget _buildInfoRow(String title, String value, IconData icon) {
+  Widget _buildInfoRow(
+    String title,
+    String value,
+    IconData icon,
+    bool isMobile,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, color: Colors.deepPurple, size: 20),
+          Icon(icon, color: Colors.deepPurple, size: isMobile ? 18 : 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: isMobile ? 14 : 15,
+              ),
             ),
           ),
-          Text(value, style: const TextStyle(color: Colors.black87)),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: isMobile ? 14 : 15,
+            ),
+          ),
         ],
       ),
     );
