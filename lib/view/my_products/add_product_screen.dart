@@ -35,12 +35,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String? _selectedType;
   String? _selectedDeliveryOption;
   String? _selectedAvailability;
+  String? _selectedItemType; // product or service
+  final FocusNode _pageFocusNode = FocusNode();
+  final List<String> _itemTypeOptions = ["Product", "Service"];
   final List<String> _selectedCategories = [];
   // String? _selectedShopId;
-  final List<String> _typeOptions = ["nos", "kg", "liter"];
+  final List<String> _typeOptions = ["nos", "kg", "liter", "per_service"];
   final List<String> _deliveryOptions = ["Home Delivery", "Store Pickup"];
   final List<String> _availabilityOptions = ["Available", "Out of Stock"];
   bool _pageLoading = true;
+  bool get isService => _selectedItemType == "Service";
   Timer? _refreshTimer; // Add timer for auto-refresh
 
   @override
@@ -59,6 +63,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void dispose() {
     // Cancel timer when screen is disposed
     _refreshTimer?.cancel();
+    _pageFocusNode.dispose();
     super.dispose();
   }
 
@@ -132,6 +137,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
         );
         if (croppedImage != null && croppedImage is File) {
+          FocusScope.of(context).unfocus();
           setState(() {
             _selectedImage = croppedImage;
           });
@@ -162,6 +168,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
         );
         if (croppedImage != null && croppedImage is File) {
+          FocusScope.of(context).unfocus();
           setState(() {
             _selectedImage = croppedImage;
           });
@@ -190,23 +197,66 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
-    if (!_formKey.currentState!.validate() || _selectedImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Fill all required fields & select an image"),
-        ),
-      );
-      _startAutoRefresh(); // Resume auto-refresh
+    // Only validate required fields: name, price, quantity, type
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Product name is required")));
+      _startAutoRefresh();
+      return;
+    }
+    if (_selectedItemType == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Item type is required")));
+      _startAutoRefresh();
+      return;
+    }
+    if (_priceController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Price is required")));
+      _startAutoRefresh();
       return;
     }
 
-    final quantity = int.tryParse(_quantityController.text.trim());
-    if (quantity == null || quantity <= 0) {
+    // if (_quantityController.text.trim().isEmpty) {
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(const SnackBar(content: Text("Quantity is required")));
+    //   _startAutoRefresh();
+    //   return;
+    // }
+
+    if (_selectedType == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Invalid stock quantity")));
-      _startAutoRefresh(); // Resume auto-refresh
+      ).showSnackBar(const SnackBar(content: Text("Unit type is required")));
+      _startAutoRefresh();
       return;
+    }
+
+    // Validate numeric fields
+    final price = int.tryParse(_priceController.text.trim());
+    if (price == null || price <= 0) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Invalid price")));
+      _startAutoRefresh();
+      return;
+    }
+
+    int? quantity;
+
+    if (!isService) {
+      quantity = int.tryParse(_quantityController.text.trim());
+      if (quantity == null || quantity <= 0) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Invalid stock quantity")));
+        _startAutoRefresh();
+        return;
+      }
     }
 
     final provider = Provider.of<ProductProvider>(context, listen: false);
@@ -215,13 +265,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
       userId: userId,
       shopId: widget.shopId!,
       name: _nameController.text.trim(),
-      description: _descriptionController.text.trim(),
-      productImage: _selectedImage,
-      price: int.parse(_priceController.text.trim()),
-      quantity: quantity,
-      estimatedTime: _estimatedTimeController.text.trim(),
-      unitType: _selectedType,
-      deliveryOption: _selectedDeliveryOption,
+      description:
+          _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(), // Optional
+      productImage: _selectedImage, // Optional
+      price: price,
+      quantity: isService ? null : quantity,
+      estimatedTime:
+          _estimatedTimeController.text.trim().isEmpty
+              ? null
+              : _estimatedTimeController.text.trim(), // Optional
+      unitType: _selectedType, // Required
+      itemType: _selectedItemType!.toLowerCase(),
+      deliveryOption: _selectedDeliveryOption, // Optional
     );
 
     // ✅ SUCCESS
@@ -271,140 +328,208 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  // _buildSubscriptionWarning(),
-                  // SizedBox(height: 10),
-                  _buildSubscriptionErrorSection(
-                    productProvider,
-                  ), // Add this line
-                ],
-              ),
-            ),
-            Form(
-              key: _formKey,
-              child: Padding(
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTextField(
-                      "Product Name",
-                      _nameController,
-                      hintText: "e.g., Organic Apples",
-                      validator:
-                          (value) =>
-                              value == null || value.isEmpty
-                                  ? 'Product name is required'
-                                  : null,
-                    ),
-                    _buildDropdownField(
-                      "Select Type",
-                      _selectedType,
-                      _typeOptions,
-                      (value) => setState(() => _selectedType = value),
-                    ),
-                    _buildTextField(
-                      "Price",
-                      _priceController,
-                      isNumber: true,
-                      hintText: "e.g., 250",
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Price is required';
-                        }
-                        if (int.tryParse(value) == null) {
-                          return 'Enter a valid number';
-                        }
-                        return null;
-                      },
-                    ),
-                    _buildTextField(
-                      "Stock Quantity",
-                      _quantityController,
-                      isNumber: true,
-                      hintText: "e.g., 100",
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Quantity is required';
-                        }
-                        if (int.tryParse(value) == null) {
-                          return 'Enter a valid number';
-                        }
-                        return null;
-                      },
-                    ),
-                    // Description field - not required
-                    _buildTextField(
-                      "Description (Optional)",
-                      _descriptionController,
-                      hintText: "Provide a detailed description of the product",
-                      validator: null,
-                      isDescription: true,
-                      // No validation
-                    ),
-                    const SizedBox(height: 15),
-                    _buildDropdownField(
-                      "Delivery Option",
-                      _selectedDeliveryOption,
-                      _deliveryOptions,
-                      (value) =>
-                          setState(() => _selectedDeliveryOption = value),
-                    ),
-                    _buildTextField(
-                      "Estimated Delivery Time (Days)",
-                      _estimatedTimeController,
-                      hintText: "e.g., 3-4 business days",
-                    ),
-                    _buildDropdownField(
-                      "Availability Status",
-                      _selectedAvailability,
-                      _availabilityOptions,
-                      (value) => setState(() => _selectedAvailability = value),
-                    ),
-                    const SizedBox(height: 15),
-                    _buildImagePicker(),
-                    const SizedBox(height: 25),
-                    productProvider.isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () => _submitProduct(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(
-                                255,
-                                7,
-                                3,
-                                201,
-                              ),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 5,
-                            ),
-                            child: const Text(
-                              'Add Product',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                    const SizedBox(height: 20),
-                  ],
+                  children: [_buildSubscriptionErrorSection(productProvider)],
                 ),
               ),
-            ),
-          ],
+              Form(
+                key: _formKey,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Shop ID display (read-only)
+                      // Container(
+                      //   width: double.infinity,
+                      //   padding: const EdgeInsets.all(16),
+                      //   margin: const EdgeInsets.only(bottom: 15),
+                      //   decoration: BoxDecoration(
+                      //     color: Colors.grey.shade100,
+                      //     borderRadius: BorderRadius.circular(10),
+                      //     border: Border.all(color: Colors.grey.shade300),
+                      //   ),
+                      //   child: Column(
+                      //     crossAxisAlignment: CrossAxisAlignment.start,
+                      //     children: [
+                      //       const Text(
+                      //         "Shop ID",
+                      //         style: TextStyle(
+                      //           fontSize: 14,
+                      //           fontWeight: FontWeight.bold,
+                      //           color: Colors.black54,
+                      //         ),
+                      //       ),
+                      //       const SizedBox(height: 4),
+                      //       Text(
+                      //         widget.shopId ?? "No shop selected",
+                      //         style: const TextStyle(
+                      //           fontSize: 16,
+                      //           fontWeight: FontWeight.w500,
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
+                      _buildRequiredDropdownField(
+                        "Item Type *",
+                        _selectedItemType,
+                        _itemTypeOptions,
+                        (value) {
+                          setState(() {
+                            _selectedItemType = value;
+                          });
+                        },
+                      ),
+                      // Required fields with asterisk
+                      _buildRequiredTextField(
+                        "Name *",
+                        _nameController,
+                        hintText:
+                            isService
+                                ? "e.g., Home Cleaning"
+                                : "e.g., Organic Apples",
+                      ),
+
+                      _buildRequiredDropdownField(
+                        " Unit Type *",
+                        _selectedType,
+                        _typeOptions,
+                        (value) => setState(() => _selectedType = value),
+                      ),
+
+                      _buildRequiredTextField(
+                        "Price *",
+                        _priceController,
+                        isNumber: true,
+                        hintText: "e.g., 250",
+                      ),
+
+                      if (!isService)
+                        _buildRequiredTextField(
+                          "Stock Quantity *",
+                          _quantityController,
+                          isNumber: true,
+                          hintText: "e.g., 100",
+                        ),
+
+                      // Optional fields (no asterisk, no validation)
+                      if (!isService)
+                        _buildTextField(
+                          "Description (Optional)",
+                          _descriptionController,
+                          isDescription: true,
+                        ),
+
+                      const SizedBox(height: 15),
+
+                      if (!isService)
+                        _buildDropdownField(
+                          "Delivery Option (Optional)",
+                          _selectedDeliveryOption,
+                          _deliveryOptions,
+                          (value) =>
+                              setState(() => _selectedDeliveryOption = value),
+                        ),
+
+                      if (!isService)
+                        _buildTextField(
+                          "Estimated Delivery Time (Optional)",
+                          _estimatedTimeController,
+                        ),
+
+                      // _buildDropdownField(
+                      //   "Availability Status (Optional)",
+                      //   _selectedAvailability,
+                      //   _availabilityOptions,
+                      //   (value) => setState(() => _selectedAvailability = value),
+                      // ),
+                      const SizedBox(height: 15),
+
+                      // Image picker (optional)
+                      _buildImagePicker(),
+
+                      const SizedBox(height: 25),
+
+                      // productProvider.isLoading
+                      //     ? const Center(child: CircularProgressIndicator())
+                      //     : SizedBox(
+                      //       width: double.infinity,
+                      //       child: ElevatedButton(
+                      //         onPressed: () => _submitProduct(context),
+                      //         style: ElevatedButton.styleFrom(
+                      //           backgroundColor: const Color.fromARGB(
+                      //             255,
+                      //             7,
+                      //             3,
+                      //             201,
+                      //           ),
+                      //           foregroundColor: Colors.white,
+                      //           padding: const EdgeInsets.symmetric(vertical: 16),
+                      //           shape: RoundedRectangleBorder(
+                      //             borderRadius: BorderRadius.circular(10),
+                      //           ),
+                      //           elevation: 5,
+                      //         ),
+                      //         child: Text(
+                      //           isService ? 'Add Service' : 'Add Product',
+                      //           style: const TextStyle(
+                      //             fontSize: 18,
+                      //             fontWeight: FontWeight.bold,
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child:
+              productProvider.isLoading
+                  ? const SizedBox(
+                    height: 56,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                  : SizedBox(
+                    height: 56,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _submitProduct(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 7, 3, 201),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 6,
+                      ),
+                      child: Text(
+                        isService ? 'Add Service' : 'Add Product',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
         ),
       ),
     );
@@ -415,28 +540,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
     TextEditingController controller, {
     bool isNumber = false,
     String? hintText,
-    String? Function(String?)? validator,
-    bool isDescription = false, // Add this parameter
+    bool isDescription = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
         controller: controller,
-        keyboardType:
-            isNumber
-                ? TextInputType.number
-                : TextInputType.multiline, // Use multiline for description
+        keyboardType: isNumber ? TextInputType.number : TextInputType.multiline,
         textCapitalization: TextCapitalization.sentences,
-        maxLines:
-            isDescription
-                ? null
-                : 1, // Unlimited lines for description, single line for others
-        minLines: isDescription ? 5 : 1, // Minimum 5 lines for description
+        maxLines: isDescription ? null : 1,
+        minLines: isDescription ? 5 : 1,
         decoration: InputDecoration(
           labelText: label,
           hintText: hintText,
-          alignLabelWithHint:
-              isDescription, // Align label properly for multiline
+          alignLabelWithHint: isDescription,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: Colors.grey),
@@ -450,10 +567,55 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
-            vertical: 16, // Increased vertical padding for better appearance
+            vertical: 16,
           ),
         ),
-        validator: validator,
+        // No validator for optional fields
+      ),
+    );
+  }
+
+  Widget _buildRequiredTextField(
+    String label,
+    TextEditingController controller, {
+    bool isNumber = false,
+    String? hintText,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hintText,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color.fromARGB(255, 7, 3, 201),
+              width: 2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+        // Simple validation for required fields
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'This field is required';
+          }
+          if (isNumber && int.tryParse(value) == null) {
+            return 'Enter a valid number';
+          }
+          return null;
+        },
       ),
     );
   }
@@ -489,10 +651,55 @@ class _AddProductScreenState extends State<AddProductScreen> {
         hint: Text("Select $label"),
         items:
             options.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(value: value, child: Text(value));
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value[0].toUpperCase() + value.substring(1)),
+              );
             }).toList(),
         onChanged: onChanged,
-        validator: (value) => value == null ? "Please select $label" : null,
+        // No validator for optional dropdowns
+      ),
+    );
+  }
+
+  Widget _buildRequiredDropdownField(
+    String label,
+    String? selectedValue,
+    List<String> options,
+    ValueChanged<String?> onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: DropdownButtonFormField<String>(
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color.fromARGB(255, 7, 3, 201),
+              width: 2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
+        value: selectedValue,
+        hint: Text("Select $label"),
+        items:
+            options.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value[0].toUpperCase() + value.substring(1)),
+              );
+            }).toList(),
+        onChanged: onChanged,
+        validator: (value) => value == null ? "Please select unit type" : null,
       ),
     );
   }
@@ -502,7 +709,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Product Image",
+          "Image (Optional)",
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,

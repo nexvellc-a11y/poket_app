@@ -199,29 +199,26 @@ class _SubscriptionUserScreenState extends State<SubscriptionUserScreen> {
                                   onPressed: () async {
                                     log('🔹 Get Started clicked');
 
-                                    // 🔹 Open shop selection popup
-                                    final selectedShopId =
-                                        await showDialog<String>(
-                                          context: context,
-                                          barrierDismissible: true,
-                                          builder:
-                                              (_) => const SelectShopDialog(),
-                                        );
-
-                                    if (selectedShopId == null) {
-                                      log('❌ Shop selection cancelled');
+                                    if (widget.shopId == null) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            "Please select a shop first",
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
                                       return;
                                     }
 
-                                    log('🏪 Selected Shop ID: $selectedShopId');
-
-                                    // Clear previous errors
                                     startProvider.clearError();
 
                                     final result = await startProvider
                                         .startSubscription(
                                           subscriptionPlanId: plan.id!,
-                                          shopId: selectedShopId,
+                                          shopId: widget.shopId!,
                                         );
 
                                     if (startProvider.errorMessage != null ||

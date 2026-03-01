@@ -35,7 +35,8 @@ class FirebasePushService {
       log("Title: $title | Body: $body");
 
       // Speak only for New Order
-      if (title.contains("New Order Alert!")) {
+      if (title.contains("New Order Alert!") ||
+          title.contains("New Service Booking!")) {
         _speak("$title. $body");
       }
 

@@ -33,6 +33,10 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
   static const double _fixedAspectRatioHeight = 1.533;
   double get _fixedAspectRatio =>
       _fixedAspectRatioWidth / _fixedAspectRatioHeight;
+  String capitalizeFirst(String value) {
+    if (value.isEmpty) return value;
+    return value[0].toUpperCase() + value.substring(1);
+  }
 
   @override
   void initState() {
@@ -91,12 +95,12 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                 0.75 // Tablets use percentage-based width
             : screenWidth * 0.9; // Mobile uses 90% of screen width
 
-    final imageHeight =
-        isTablet
-            ? screenHeight *
-                0.45 // Tablets use height-based
-            : imageWidth /
-                _fixedAspectRatio; // Mobile uses aspect ratio to calculate height
+    // final imageHeight =
+    //     isTablet
+    //         ? screenHeight *
+    //             0.45 // Tablets use height-based
+    //         : imageWidth /
+    //             _fixedAspectRatio; // Mobile uses aspect ratio to calculate height
 
     final horizontalPadding = screenWidth * 0.05; // 5% padding on each side
 
@@ -314,7 +318,6 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                 // Product Image with fixed aspect ratio for mobile
                 Container(
                   width: imageWidth,
-                  height: imageHeight,
                   margin: EdgeInsets.symmetric(
                     horizontal: horizontalPadding,
                     vertical: 16,
@@ -331,40 +334,41 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
-                    child: Stack(
-                      children: [
-                        Image.network(
-                          product.productImage.isNotEmpty
-                              ? product.productImage
-                              : 'https://via.placeholder.com/300',
-                          width: imageWidth,
-                          height: imageHeight,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[200],
-                              child: Icon(
-                                Icons.inventory_2_rounded,
-                                size: 60,
-                                color: Colors.grey[400],
+                    child: AspectRatio(
+                      aspectRatio: _fixedAspectRatio, // 🔥 SAME FOR ALL DEVICES
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.network(
+                            product.productImage.isNotEmpty
+                                ? product.productImage
+                                : 'https://via.placeholder.com/300',
+                            fit: BoxFit.cover, // OK now (no distortion)
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Icon(
+                                  Icons.inventory_2_rounded,
+                                  size: 60,
+                                  color: Colors.grey[400],
+                                ),
+                              );
+                            },
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withOpacity(0.1),
+                                ],
                               ),
-                            );
-                          },
-                        ),
-                        // Gradient overlay
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withOpacity(0.1),
-                              ],
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -431,7 +435,7 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                                 const SizedBox(height: 4),
                                 Text(
                                   product.unitType.isNotEmpty
-                                      ? product.unitType
+                                      ? capitalizeFirst(product.unitType)
                                       : 'N/A',
                                   style: TextStyle(
                                     color: Colors.grey[600],
@@ -482,62 +486,63 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                 const SizedBox(height: 16),
 
                 // Description Card with responsive width
-                Container(
-                  width: screenWidth * 0.95,
-                  margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  padding: EdgeInsets.all(isTablet ? 24 : 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.purple[50],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.description_rounded,
-                              color: Colors.purple[600],
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Product Description',
-                            style: TextStyle(
-                              fontSize: isTablet ? 20 : 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        product.description ??
-                            'No description available for this product.',
-                        style: TextStyle(
-                          fontSize: isTablet ? 16 : 15,
-                          color: Colors.grey[700],
-                          height: 1.5,
+                if (product.description != null &&
+                    product.description!.trim().isNotEmpty)
+                  Container(
+                    width: screenWidth * 0.95,
+                    margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                    padding: EdgeInsets.all(isTablet ? 24 : 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 15,
+                          spreadRadius: 2,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            // Container(
+                            //   padding: const EdgeInsets.all(6),
+                            //   decoration: BoxDecoration(
+                            //     color: Colors.purple[50],
+                            //     borderRadius: BorderRadius.circular(8),
+                            //   ),
+                            //   child: Icon(
+                            //     Icons.description_rounded,
+                            //     color: Colors.purple[600],
+                            //     size: 20,
+                            //   ),
+                            // ),
+                            const SizedBox(width: 12),
+                            // Text(
+                            //   'Product Description',
+                            //   style: TextStyle(
+                            //     fontSize: isTablet ? 20 : 18,
+                            //     fontWeight: FontWeight.w600,
+                            //     color: Colors.grey[800],
+                            //   ),
+                            // ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          product.description!.trim(),
+                          style: TextStyle(
+                            fontSize: isTablet ? 16 : 15,
+                            color: Colors.grey[700],
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
                 const SizedBox(height: 16),
 
@@ -584,14 +589,14 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      _buildModernDetailRow(
-                        'Estimated Delivery',
-                        product.estimatedTime ?? 'N/A',
-                        Icons.schedule_rounded,
-                        Colors.blue,
-                        isTablet,
-                      ),
+                      // const SizedBox(height: 16),
+                      // _buildModernDetailRow(
+                      //   'Estimated Delivery',
+                      //   product.estimatedTime ?? 'N/A',
+                      //   Icons.schedule_rounded,
+                      //   Colors.blue,
+                      //   isTablet,
+                      // ),
                       const SizedBox(height: 12),
                       _buildModernDetailRow(
                         'Category',
@@ -603,21 +608,33 @@ class _MyShopProductDetailsState extends State<MyShopProductDetails> {
                       const SizedBox(height: 12),
                       _buildModernDetailRow(
                         'Product Type',
-                        product.unitType.isNotEmpty ? product.unitType : 'N/A',
+                        product.unitType.isNotEmpty
+                            ? capitalizeFirst(product.unitType)
+                            : 'N/A',
                         Icons.inventory_2_rounded,
                         Colors.purple,
                         isTablet,
                       ),
                       const SizedBox(height: 12),
-                      _buildModernDetailRow(
-                        'Delivery Option',
-                        product.deliveryOption.isNotEmpty
-                            ? product.deliveryOption
-                            : 'N/A',
-                        Icons.local_shipping_rounded,
-                        Colors.orange,
-                        isTablet,
-                      ),
+                      if (product.unitType != 'per_service') ...[
+                        _buildModernDetailRow(
+                          'Estimated Delivery',
+                          product.estimatedTime ?? 'N/A',
+                          Icons.schedule_rounded,
+                          Colors.blue,
+                          isTablet,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildModernDetailRow(
+                          'Delivery Option',
+                          product.deliveryOption.isNotEmpty
+                              ? product.deliveryOption
+                              : 'N/A',
+                          Icons.local_shipping_rounded,
+                          Colors.orange,
+                          isTablet,
+                        ),
+                      ],
                     ],
                   ),
                 ),

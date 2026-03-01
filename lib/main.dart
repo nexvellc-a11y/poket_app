@@ -49,7 +49,7 @@ import 'package:poketstore/service/notification(fcm)_service.dart/notification(f
 import 'package:poketstore/service/permission_service/permission_service.dart';
 import 'package:poketstore/view/splash/splash_screen.dart'; // Splash screen, likely the app's entry point
 import 'package:provider/provider.dart'; // State management library
-
+import 'package:poketstore/controllers/service_booking_controller/service_booking_controller.dart';
 import 'controllers/shop_of_user_controller/shop_of_user_controller.dart'; // Controller for user's shop
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -140,6 +140,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => StateController()),
         ChangeNotifierProvider(create: (_) => DistrictController()),
         ChangeNotifierProvider(create: (_) => UserShopListController()),
+        ChangeNotifierProvider(create: (_) => ServiceBookingController()),
       ],
       // The root widget of the application.
       child: const MyApp(),

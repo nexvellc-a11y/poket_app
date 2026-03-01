@@ -9,6 +9,7 @@ class Product {
   final double sold;
   final String? estimatedTime;
   final String unitType;
+  final String? itemType;
   final String deliveryOption;
   final String userId;
   final bool favorite;
@@ -27,6 +28,7 @@ class Product {
     required this.sold,
     this.estimatedTime,
     required this.unitType,
+    this.itemType,
     required this.deliveryOption,
     required this.userId,
     required this.favorite,
@@ -49,6 +51,7 @@ class Product {
       sold: (json['sold'] as num?)?.toDouble() ?? 0.0,
       estimatedTime: json['estimatedTime'],
       unitType: json['unitType'] ?? "",
+      itemType: json['itemType'] ?? "",
       deliveryOption: json['deliveryOption'] ?? "",
       userId: json['userId'] ?? "",
       favorite: json['favorite'] ?? false,
@@ -69,6 +72,7 @@ class Product {
       'sold': sold,
       'estimatedTime': estimatedTime,
       'unitType': unitType,
+      'itemType': itemType,
       'deliveryOption': deliveryOption,
       'userId': userId,
       'description': description,

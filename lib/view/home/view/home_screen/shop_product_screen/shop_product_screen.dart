@@ -26,7 +26,7 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
   static const double _fixedAspectRatioHeight = 1.353;
   double get _fixedAspectRatio =>
       _fixedAspectRatioWidth / _fixedAspectRatioHeight;
-
+  bool get _isSmallMobile => MediaQuery.of(context).size.width < 375;
   // Responsive breakpoints
   static const double _mobileBreakpoint = 600;
   static const double _tabletBreakpoint = 900;
@@ -234,195 +234,200 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final screenWidth = MediaQuery.of(context).size.width;
+    final shop = widget.shop;
 
-    return Scaffold(
-      body: CustomScrollView(
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // SliverAppBar with responsive expanded height based on aspect ratio
-          SliverAppBar(
-            expandedHeight: _getAppBarHeight(),
-            floating: true,
-            pinned: true,
-            snap: false,
-            elevation: 0,
-            backgroundColor: colorScheme.primary,
-            foregroundColor: Colors.white,
-            flexibleSpace: FlexibleSpaceBar(
-              collapseMode: CollapseMode.parallax,
-              background: _buildAppBarBackground(colorScheme),
-              titlePadding: const EdgeInsets.only(left: 12.0, bottom: 6.0),
-              title: _buildShopInfo(),
+    return SafeArea(
+      child: Scaffold(
+        body: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // SliverAppBar with responsive expanded height based on aspect ratio
+            SliverAppBar(
+              expandedHeight: _getAppBarHeight(),
+              floating: true,
+              pinned: true,
+              snap: false,
+              elevation: 0,
+              backgroundColor: colorScheme.primary,
+              foregroundColor: Colors.white,
+              flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.parallax,
+                background: _buildAppBarBackground(shop, colorScheme),
+                titlePadding: const EdgeInsets.only(left: 12.0, bottom: 6.0),
+                title: _buildShopInfo(),
+              ),
+              leading: _buildBackButton(colorScheme),
             ),
-            leading: _buildBackButton(colorScheme),
-          ),
 
-          // Aspect ratio indicator for mobile
-          // if (_isMobile)
-          //   SliverToBoxAdapter(
-          //     child: Padding(
-          //       padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
-          //       child: Center(
-          //         child: Container(
-          //           padding: const EdgeInsets.symmetric(
-          //             horizontal: 12,
-          //             vertical: 4,
-          //           ),
-          //           decoration: BoxDecoration(
-          //             color: Colors.blue[50],
-          //             borderRadius: BorderRadius.circular(20),
-          //           ),
-          //           child: Text(
-          //             'Header ratio: ${_fixedAspectRatioWidth.toStringAsFixed(3)} : ${_fixedAspectRatioHeight.toStringAsFixed(3)}',
-          //             style: TextStyle(
-          //               fontSize: 12,
-          //               color: Colors.blue[700],
-          //               fontWeight: FontWeight.w500,
-          //             ),
-          //           ),
-          //         ),
-          //       ),
-          //     ),
-          //   ),
+            // Aspect ratio indicator for mobile
+            // if (_isMobile)
+            //   SliverToBoxAdapter(
+            //     child: Padding(
+            //       padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+            //       child: Center(
+            //         child: Container(
+            //           padding: const EdgeInsets.symmetric(
+            //             horizontal: 12,
+            //             vertical: 4,
+            //           ),
+            //           decoration: BoxDecoration(
+            //             color: Colors.blue[50],
+            //             borderRadius: BorderRadius.circular(20),
+            //           ),
+            //           child: Text(
+            //             'Header ratio: ${_fixedAspectRatioWidth.toStringAsFixed(3)} : ${_fixedAspectRatioHeight.toStringAsFixed(3)}',
+            //             style: TextStyle(
+            //               fontSize: 12,
+            //               color: Colors.blue[700],
+            //               fontWeight: FontWeight.w500,
+            //             ),
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //   ),
 
-          // Search Bar
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _SearchBarDelegate(
-              maxHeight: _getSearchBarHeight(),
-              minHeight: _getSearchBarHeight(),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  _isMobile ? 16 : 24,
-                  16,
-                  _isMobile ? 16 : 24,
-                  8,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(_getBorderRadius()),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+            // Search Bar
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _SearchBarDelegate(
+                maxHeight: _getSearchBarHeight(),
+                minHeight: _getSearchBarHeight(),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    _isMobile ? 16 : 24,
+                    16,
+                    _isMobile ? 16 : 24,
+                    8,
                   ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search products...',
-                      hintStyle: TextStyle(color: Colors.grey[500]),
-                      prefixIcon: Icon(
-                        Icons.search_rounded,
-                        color: colorScheme.primary,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: _isMobile ? 20 : 24,
-                        vertical: _isMobile ? 16 : 20,
-                      ),
-                      suffixIcon:
-                          _searchController.text.isNotEmpty
-                              ? IconButton(
-                                icon: Icon(
-                                  Icons.clear_rounded,
-                                  color: Colors.grey[500],
-                                  size: _isMobile ? 20 : 24,
-                                ),
-                                onPressed: () => _searchController.clear(),
-                              )
-                              : null,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(_getBorderRadius()),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontSize: _isMobile ? 16 : 18,
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search products...',
+                        hintStyle: TextStyle(color: Colors.grey[500]),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: colorScheme.primary,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: _isMobile ? 20 : 24,
+                          vertical: _isMobile ? 16 : 20,
+                        ),
+                        suffixIcon:
+                            _searchController.text.isNotEmpty
+                                ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear_rounded,
+                                    color: Colors.grey[500],
+                                    size: _isMobile ? 20 : 24,
+                                  ),
+                                  onPressed: () => _searchController.clear(),
+                                )
+                                : null,
+                      ),
+                      style: textTheme.bodyLarge?.copyWith(
+                        fontSize: _isMobile ? 16 : 18,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // Products Grid
-          Consumer<ShopProductNearbyProductController>(
-            builder: (context, controller, child) {
-              if (controller.isLoading) {
-                return SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: colorScheme.primary,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          "Loading products...",
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[600],
+            // Products Grid
+            Consumer<ShopProductNearbyProductController>(
+              builder: (context, controller, child) {
+                if (controller.isLoading) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: colorScheme.primary,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          Text(
+                            "Loading products...",
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                  );
+                }
+
+                final productsToDisplay =
+                    controller.filteredProducts.isEmpty &&
+                            _searchController.text.isEmpty
+                        ? controller.productData?.products
+                        : controller.filteredProducts;
+
+                if (productsToDisplay == null || productsToDisplay.isEmpty) {
+                  return SliverFillRemaining(
+                    child: _buildEmptyState(_searchController.text.isNotEmpty),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: _isMobile ? 16 : 24,
+                    vertical: 8,
+                  ),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _getCrossAxisCount(),
+                      crossAxisSpacing: _isMobile ? 16 : 20,
+                      mainAxisSpacing: _isMobile ? 16 : 20,
+                      childAspectRatio: _getChildAspectRatio(),
+                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final product = productsToDisplay[index];
+                      return _buildProductCard(
+                        product,
+                        colorScheme,
+                        textTheme,
+                        context,
+                      );
+                    }, childCount: productsToDisplay.length),
                   ),
                 );
-              }
-
-              final productsToDisplay =
-                  controller.filteredProducts.isEmpty &&
-                          _searchController.text.isEmpty
-                      ? controller.productData?.products
-                      : controller.filteredProducts;
-
-              if (productsToDisplay == null || productsToDisplay.isEmpty) {
-                return SliverFillRemaining(
-                  child: _buildEmptyState(_searchController.text.isNotEmpty),
-                );
-              }
-
-              return SliverPadding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: _isMobile ? 16 : 24,
-                  vertical: 8,
-                ),
-                sliver: SliverGrid(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _getCrossAxisCount(),
-                    crossAxisSpacing: _isMobile ? 16 : 20,
-                    mainAxisSpacing: _isMobile ? 16 : 20,
-                    childAspectRatio: _getChildAspectRatio(),
-                  ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final product = productsToDisplay[index];
-                    return _buildProductCard(
-                      product,
-                      colorScheme,
-                      textTheme,
-                      context,
-                    );
-                  }, childCount: productsToDisplay.length),
-                ),
-              );
-            },
-          ),
-        ],
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // Responsive app bar height with fixed aspect ratio for mobile
   double _getAppBarHeight() {
-    if (_isMobile) {
-      // For mobile, use aspect ratio to calculate height
-      final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Use aspect ratio for mobile & tablet
+    if (_isMobile || _isTablet) {
       return screenWidth / _fixedAspectRatio;
     }
-    if (_isTablet) return 180.0;
-    return 220.0;
+
+    // Desktop can be taller
+    return screenWidth / _fixedAspectRatio * 0.9;
   }
 
   // Responsive search bar height
@@ -452,37 +457,119 @@ class _ShopProductsScreenState extends State<ShopProductsScreen> {
     return 0.8;
   }
 
-  Widget _buildAppBarBackground(ColorScheme colorScheme) {
+  double get _headerIconSize {
+    if (_isSmallMobile) return 50.0;
+    if (_isMobile) return 60.0;
+    if (_isTablet) return 70.0;
+    return 80.0;
+  }
+
+  double get _headerHeight {
+    if (_isMobile || _isSmallMobile) {
+      // For mobile, height is calculated from width using aspect ratio
+      return _headerWidth / (_fixedAspectRatio * 1.6);
+    } else {
+      // For tablets and larger, use fixed height
+      return 200.0;
+    }
+  }
+
+  double get _headerWidth => MediaQuery.of(context).size.width;
+
+  Widget _buildAppBarBackground(ShopModel shop, ColorScheme colorScheme) {
     return Container(
+      width: _headerWidth,
+      height: _headerHeight,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            widget.shop.headerImage?.isNotEmpty == true
-                ? Colors.transparent
-                : colorScheme.primary,
             colorScheme.primary.withOpacity(0.9),
+            colorScheme.primary.withOpacity(0.7),
           ],
         ),
       ),
-      child: Image.network(
-        widget.shop.headerImage?.isNotEmpty == true
-            ? widget.shop.headerImage!
-            : 'https://via.placeholder.com/400x200?text=No+Image',
-        fit: BoxFit.cover, // Changed from BoxFit.cover to maintain aspect ratio
-        errorBuilder:
-            (_, __, ___) => Container(
-              color: Colors.grey.shade300,
-              child: Icon(
-                Icons.store_mall_directory_rounded,
-                size: _isMobile ? 60 : 80,
-                color: Colors.grey.shade400,
+      child:
+          shop.headerImage?.isNotEmpty == true
+              ? Stack(
+                children: [
+                  // Background image - using BoxFit.cover to maintain aspect ratio
+                  Positioned.fill(
+                    child: Image.network(
+                      shop.headerImage!,
+                      fit:
+                          BoxFit
+                              .contain, // Changed from BoxFit.fill to BoxFit.cover
+                      errorBuilder:
+                          (_, __, ___) => Container(
+                            color: colorScheme.primary,
+                            child: Center(
+                              child: Icon(
+                                Icons.store,
+                                size: _headerIconSize,
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                          ),
+                    ),
+                  ),
+                  // Gradient overlay for better text visibility
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.3),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+              : Container(
+                color: colorScheme.primary,
+                child: Center(
+                  child: Icon(
+                    Icons.store,
+                    size: _headerIconSize,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
               ),
-            ),
-      ),
     );
   }
+
+  // Widget _buildAppBarBackground(ColorScheme colorScheme) {
+  //   return Container(
+  //     color: colorScheme.primary,
+  //     child: Center(
+  //       child: AspectRatio(
+  //         aspectRatio: _fixedAspectRatio,
+  //         child: Image.network(
+  //           widget.shop.headerImage?.isNotEmpty == true
+  //               ? widget.shop.headerImage!
+  //               : 'https://via.placeholder.com/400x200?text=No+Image',
+  //           fit: BoxFit.contain, // ✅ SHOW FULL IMAGE
+  //           alignment: Alignment.center,
+  //           errorBuilder:
+  //               (_, __, ___) => Container(
+  //                 color: Colors.grey.shade300,
+  //                 child: Icon(
+  //                   Icons.store_mall_directory_rounded,
+  //                   size: _isMobile ? 60 : 80,
+  //                   color: Colors.grey.shade400,
+  //                 ),
+  //               ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildShopInfo() {
     return Align(

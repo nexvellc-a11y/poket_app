@@ -6,6 +6,7 @@ import 'package:poketstore/view/about_app/about_app.dart';
 import 'package:poketstore/view/help/help.dart';
 import 'package:poketstore/view/privacy_and_policy/privacy_policy.dart';
 import 'package:poketstore/view/profile/pocket_coins.dart';
+import 'package:poketstore/view/subscription/select_shop.dart';
 import 'package:poketstore/view/subscription/subscription_user.dart';
 import 'package:poketstore/view/web_view/web_view.dart';
 import 'package:provider/provider.dart';
@@ -58,7 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: const [
                 Icon(Icons.monetization_on, color: Colors.amber),
                 SizedBox(width: 8),
-                Text("PocketCoins"),
+                Text("PocketReward"),
               ],
             ),
             content: const Text(
@@ -132,9 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    PocketCoinsScreen(userProfile: userProfile),
+                            builder: (context) => PocketCoinsScreen(),
                           ),
                         );
                       },
@@ -248,9 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 buildMenuItem(Icons.subscriptions_outlined, "Subscription", () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => SubscriptionUserScreen(),
-                    ),
+                    MaterialPageRoute(builder: (context) => SelectShopScreen()),
                   );
                 }),
 

@@ -437,9 +437,9 @@ class _CropImageScreenProductState extends State<CropImageScreenProduct> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      // Fixed crop area with centered cropping region
+                      // Fixed crop area with centered cropping region - FLEX FACTOR REDUCED
                       Expanded(
-                        flex: 3,
+                        flex: 2, // REDUCED FROM 3 TO 2
                         child: Center(
                           child: Container(
                             decoration: BoxDecoration(
@@ -456,12 +456,11 @@ class _CropImageScreenProductState extends State<CropImageScreenProduct> {
                               borderRadius: BorderRadius.circular(15),
                               child: SizedBox(
                                 width: screenWidth * 0.9,
-                                height: screenHeight * 0.5,
+                                height:
+                                    screenHeight *
+                                    0.4, // REDUCED FROM 0.5 TO 0.4
                                 child: Stack(
                                   children: [
-                                    // 🔥 REMOVED the duplicate background image 🔥
-                                    // Now only the Crop widget displays the image
-
                                     // Crop overlay with fixed aspect ratio
                                     Center(
                                       child: AspectRatio(
@@ -501,7 +500,6 @@ class _CropImageScreenProductState extends State<CropImageScreenProduct> {
                                             }
                                           },
                                           withCircleUi: false,
-                                          // 🔥 INTERACTIVE FALSE to disable movement 🔥
                                           interactive: false,
                                           aspectRatio: _fixedAspectRatio,
                                           cornerDotBuilder:
@@ -600,7 +598,7 @@ class _CropImageScreenProductState extends State<CropImageScreenProduct> {
                                             ),
                                           ),
                                           child: const Text(
-                                            'Fixed crop area (non-movable)',
+                                            'Fixed crop area',
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 12,
@@ -618,232 +616,274 @@ class _CropImageScreenProductState extends State<CropImageScreenProduct> {
                         ),
                       ),
 
-                      const SizedBox(height: 20),
-
-                      // Status and Controls Section
+                      const SizedBox(height: 12), // REDUCED FROM 20 TO 12
+                      // Status and Controls Section - FLEX FACTOR REDUCED
                       Expanded(
-                        flex: 1,
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 5,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Status Text
-                              Text(
-                                _statusText,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color:
-                                      _statusText.contains('failed') ||
-                                              _statusText.contains('error')
-                                          ? Colors.red
-                                          : Colors.green,
-                                  fontWeight: FontWeight.w500,
+                        flex:
+                            1, // REDUCED FROM 1 TO 1 (keeping same but content adjusted)
+                        child: SingleChildScrollView(
+                          // ADDED SCROLLVIEW
+                          child: Container(
+                            padding: const EdgeInsets.all(
+                              12,
+                            ), // REDUCED FROM 16 TO 12
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 5,
+                                  spreadRadius: 1,
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Controls Row
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  // Undo Button
-                                  Tooltip(
-                                    message: 'Undo',
-                                    child: IconButton(
-                                      onPressed:
-                                          _undoEnabled
-                                              ? () => _cropController.undo()
-                                              : null,
-                                      icon: const Icon(Icons.undo),
-                                      color:
-                                          _undoEnabled
-                                              ? const Color(0xFF0703C9)
-                                              : Colors.grey,
-                                      style: IconButton.styleFrom(
-                                        backgroundColor:
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Status Text
+                                Text(
+                                  _statusText,
+                                  style: TextStyle(
+                                    fontSize: 13, // REDUCED FROM 14 TO 13
+                                    color:
+                                        _statusText.contains('failed') ||
+                                                _statusText.contains('error')
+                                            ? Colors.red
+                                            : Colors.green,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 8,
+                                ), // REDUCED FROM 12 TO 8
+                                // Controls Row
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // Undo Button
+                                    Tooltip(
+                                      message: 'Undo',
+                                      child: IconButton(
+                                        onPressed:
                                             _undoEnabled
-                                                ? const Color(
-                                                  0xFF0703C9,
-                                                ).withOpacity(0.1)
-                                                : Colors.grey[100],
-                                        padding: const EdgeInsets.all(12),
+                                                ? () => _cropController.undo()
+                                                : null,
+                                        icon: const Icon(Icons.undo),
+                                        iconSize: 20, // ADDED FIXED SIZE
+                                        color:
+                                            _undoEnabled
+                                                ? const Color(0xFF0703C9)
+                                                : Colors.grey,
+                                        style: IconButton.styleFrom(
+                                          backgroundColor:
+                                              _undoEnabled
+                                                  ? const Color(
+                                                    0xFF0703C9,
+                                                  ).withOpacity(0.1)
+                                                  : Colors.grey[100],
+                                          padding: const EdgeInsets.all(
+                                            8,
+                                          ), // REDUCED FROM 12 TO 8
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-
-                                  // Redo Button
-                                  Tooltip(
-                                    message: 'Redo',
-                                    child: IconButton(
-                                      onPressed:
-                                          _redoEnabled
-                                              ? () => _cropController.redo()
-                                              : null,
-                                      icon: const Icon(Icons.redo),
-                                      color:
-                                          _redoEnabled
-                                              ? const Color(0xFF0703C9)
-                                              : Colors.grey,
-                                      style: IconButton.styleFrom(
-                                        backgroundColor:
+                                    const SizedBox(
+                                      width: 4,
+                                    ), // REDUCED FROM 8 TO 4
+                                    // Redo Button
+                                    Tooltip(
+                                      message: 'Redo',
+                                      child: IconButton(
+                                        onPressed:
                                             _redoEnabled
-                                                ? const Color(
-                                                  0xFF0703C9,
-                                                ).withOpacity(0.1)
-                                                : Colors.grey[100],
-                                        padding: const EdgeInsets.all(12),
+                                                ? () => _cropController.redo()
+                                                : null,
+                                        icon: const Icon(Icons.redo),
+                                        iconSize: 20, // ADDED FIXED SIZE
+                                        color:
+                                            _redoEnabled
+                                                ? const Color(0xFF0703C9)
+                                                : Colors.grey,
+                                        style: IconButton.styleFrom(
+                                          backgroundColor:
+                                              _redoEnabled
+                                                  ? const Color(
+                                                    0xFF0703C9,
+                                                  ).withOpacity(0.1)
+                                                  : Colors.grey[100],
+                                          padding: const EdgeInsets.all(
+                                            8,
+                                          ), // REDUCED FROM 12 TO 8
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 20),
-
-                                  // Grid Toggle
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF0703C9,
-                                      ).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.grid_on,
-                                          color: Color(0xFF0703C9),
-                                          size: 18,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Grid',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: const Color(0xFF0703C9),
+                                    const SizedBox(
+                                      width: 12,
+                                    ), // REDUCED FROM 20 TO 12
+                                    // Grid Toggle
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, // REDUCED FROM 12 TO 8
+                                        vertical: 4, // REDUCED FROM 6 TO 4
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFF0703C9,
+                                        ).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(
+                                          16,
+                                        ), // REDUCED FROM 20 TO 16
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.grid_on,
+                                            color: Color(0xFF0703C9),
+                                            size: 16, // REDUCED FROM 18 TO 16
                                           ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Switch(
-                                          value: _overlayVisible,
-                                          onChanged:
-                                              (val) => setState(
-                                                () => _overlayVisible = val,
-                                              ),
-                                          activeColor: const Color(0xFF0703C9),
-                                          materialTapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 16),
-
-                              // Crop Button
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed:
-                                      _isCropping
-                                          ? null
-                                          : () {
-                                            try {
-                                              setState(
-                                                () => _isCropping = true,
-                                              );
-                                              _cropController.crop();
-                                              _logSuccess(
-                                                'Crop action initiated',
-                                              );
-                                            } catch (e, stackTrace) {
-                                              _logError(
-                                                'Crop initiation failed',
-                                                e,
-                                                stackTrace,
-                                              );
-                                              if (mounted) {
-                                                setState(
-                                                  () => _isCropping = false,
-                                                );
-                                              }
-                                            }
-                                          },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0703C9),
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 18,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    elevation: 4,
-                                    shadowColor: const Color(
-                                      0xFF0703C9,
-                                    ).withOpacity(0.3),
-                                    disabledBackgroundColor: Colors.grey[400],
-                                  ),
-                                  child:
-                                      _isCropping
-                                          ? const Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      color: Colors.white,
-                                                    ),
-                                              ),
-                                              SizedBox(width: 12),
-                                              Text(
-                                                'Cropping...',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ],
-                                          )
-                                          : const Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.crop, size: 20),
-                                              SizedBox(width: 12),
-                                              Text(
-                                                'Crop Image',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ],
+                                          const SizedBox(
+                                            width: 4,
+                                          ), // REDUCED FROM 6 TO 4
+                                          Text(
+                                            'Grid',
+                                            style: TextStyle(
+                                              fontSize:
+                                                  12, // REDUCED FROM 14 TO 12
+                                              fontWeight: FontWeight.w500,
+                                              color: const Color(0xFF0703C9),
+                                            ),
                                           ),
+                                          const SizedBox(
+                                            width: 4,
+                                          ), // REDUCED FROM 6 TO 4
+                                          Transform.scale(
+                                            scale:
+                                                0.7, // ADDED SCALE TO REDUCE SWITCH SIZE
+                                            child: Switch(
+                                              value: _overlayVisible,
+                                              onChanged:
+                                                  (val) => setState(
+                                                    () => _overlayVisible = val,
+                                                  ),
+                                              activeColor: const Color(
+                                                0xFF0703C9,
+                                              ),
+                                              materialTapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+
+                                const SizedBox(
+                                  height: 12,
+                                ), // REDUCED FROM 16 TO 12
+                                // Crop Button
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed:
+                                        _isCropping
+                                            ? null
+                                            : () {
+                                              try {
+                                                setState(
+                                                  () => _isCropping = true,
+                                                );
+                                                _cropController.crop();
+                                                _logSuccess(
+                                                  'Crop action initiated',
+                                                );
+                                              } catch (e, stackTrace) {
+                                                _logError(
+                                                  'Crop initiation failed',
+                                                  e,
+                                                  stackTrace,
+                                                );
+                                                if (mounted) {
+                                                  setState(
+                                                    () => _isCropping = false,
+                                                  );
+                                                }
+                                              }
+                                            },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF0703C9),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12, // REDUCED FROM 18 TO 12
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          10,
+                                        ), // REDUCED FROM 12 TO 10
+                                      ),
+                                      elevation: 3, // REDUCED FROM 4 TO 3
+                                      shadowColor: const Color(
+                                        0xFF0703C9,
+                                      ).withOpacity(0.3),
+                                      disabledBackgroundColor: Colors.grey[400],
+                                    ),
+                                    child:
+                                        _isCropping
+                                            ? const Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                SizedBox(
+                                                  width:
+                                                      16, // REDUCED FROM 20 TO 16
+                                                  height:
+                                                      16, // REDUCED FROM 20 TO 16
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth:
+                                                        1.5, // REDUCED FROM 2 TO 1.5
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: 8,
+                                                ), // REDUCED FROM 12 TO 8
+                                                Text(
+                                                  'Cropping...',
+                                                  style: TextStyle(
+                                                    fontSize:
+                                                        14, // REDUCED FROM 16 TO 14
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            )
+                                            : const Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons.crop,
+                                                  size: 18,
+                                                ), // REDUCED FROM 20 TO 18
+                                                SizedBox(
+                                                  width: 8,
+                                                ), // REDUCED FROM 12 TO 8
+                                                Text(
+                                                  'Crop Image',
+                                                  style: TextStyle(
+                                                    fontSize:
+                                                        14, // REDUCED FROM 16 TO 14
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

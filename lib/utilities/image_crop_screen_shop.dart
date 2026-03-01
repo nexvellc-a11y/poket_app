@@ -168,6 +168,12 @@ class _CropImageScreenShopState extends State<CropImageScreenShop> {
   }
 
   Future<void> _showPreviewBottomSheet(File croppedImage) async {
+    // Calculate the correct dimensions based on screen width and fixed aspect ratio
+    final double screenWidth =
+        MediaQuery.of(context).size.width - 40; // Account for padding
+    final double previewHeight =
+        screenWidth / _fixedAspectRatio; // height = width / aspect ratio
+
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -230,9 +236,9 @@ class _CropImageScreenShopState extends State<CropImageScreenShop> {
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 20),
-                                // Preview with exact header dimensions
+                                // Preview with correct aspect ratio
                                 Container(
-                                  height: _headerHeight,
+                                  height: previewHeight,
                                   width: double.infinity,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(15),
@@ -255,7 +261,7 @@ class _CropImageScreenShopState extends State<CropImageScreenShop> {
                                           croppedImage,
                                           fit: BoxFit.cover,
                                           width: double.infinity,
-                                          height: _headerHeight,
+                                          height: previewHeight,
                                           errorBuilder: (
                                             context,
                                             error,
@@ -300,8 +306,8 @@ class _CropImageScreenShopState extends State<CropImageScreenShop> {
                                               aspectRatio: _fixedAspectRatio,
                                             ),
                                             size: Size(
-                                              MediaQuery.of(context).size.width,
-                                              _headerHeight,
+                                              screenWidth,
+                                              previewHeight,
                                             ),
                                           ),
                                         // Gradient overlay for better text visibility
@@ -321,6 +327,16 @@ class _CropImageScreenShopState extends State<CropImageScreenShop> {
                                         ),
                                       ],
                                     ),
+                                  ),
+                                ),
+                                // Aspect ratio info
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Aspect Ratio: ${_fixedAspectRatioWidth.toStringAsFixed(3)} : ${_fixedAspectRatioHeight.toStringAsFixed(3)}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 const SizedBox(height: 25),

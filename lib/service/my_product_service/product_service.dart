@@ -26,6 +26,7 @@ class ProductService {
     String? category,
     String? estimatedTime,
     String? unitType,
+    String? itemType,
     String? deliveryOption,
   }) async {
     try {
@@ -37,6 +38,7 @@ class ProductService {
         if (quantity != null) "quantity": quantity,
         if (estimatedTime != null) "estimatedTime": estimatedTime,
         if (unitType != null) "unitType": unitType,
+        if (itemType != null) "itemType": itemType,
         if (deliveryOption != null) "deliveryOption": deliveryOption,
         if (productImage != null)
           "productImage": await MultipartFile.fromFile(

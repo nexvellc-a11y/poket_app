@@ -22,6 +22,10 @@ class _CartScreenState extends State<CartScreen> {
   final Map<String, TextEditingController> _kgControllers = {};
   final Map<String, TextEditingController> _gramControllers = {};
   final Map<String, TextEditingController> _unitControllers = {};
+  String capitalizeFirst(String value) {
+    if (value.isEmpty) return value;
+    return value[0].toUpperCase() + value.substring(1);
+  }
 
   @override
   void initState() {
@@ -244,7 +248,8 @@ class _CartScreenState extends State<CartScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            "₹${(product.price ?? 0.0).toStringAsFixed(2)} per ${product.productType == 'nos' ? 'nos' : 'kg'}",
+                                            "₹${(product.price ?? 0.0).toStringAsFixed(2)} per "
+                                            "${capitalizeFirst(product.productType == 'nos' ? 'nos' : 'kg')}",
                                             style: const TextStyle(
                                               color: Colors.grey,
                                             ),

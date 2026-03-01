@@ -53,10 +53,10 @@ class _ShopDetailsWithProductsScreenState
   double get _headerHeight {
     if (_isMobile || _isSmallMobile) {
       // For mobile, height is calculated from width using aspect ratio
-      return _headerWidth / _fixedAspectRatio;
+      return _headerWidth / (_fixedAspectRatio * 1.6);
     } else {
       // For tablets and larger, use fixed height
-      return 260.0;
+      return 200.0;
     }
   }
 
@@ -129,7 +129,7 @@ class _ShopDetailsWithProductsScreenState
   }
 
   double get _gridChildAspectRatio {
-    if (_isSmallMobile) return 0.75;
+    if (_isSmallMobile) return 0.95;
     if (_isMobile) return 0.7;
     if (_isTablet) return 0.89;
     return 0.75;
@@ -300,284 +300,290 @@ class _ShopDetailsWithProductsScreenState
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: CustomScrollView(
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // App Bar with Shop Header - with fixed aspect ratio on mobile
-          SliverAppBar(
-            expandedHeight: _appBarHeight,
-            pinned: true,
-            backgroundColor: colorScheme.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              collapseMode: CollapseMode.parallax,
-              background: _buildAppBarBackground(shop, colorScheme),
-              titlePadding: EdgeInsets.only(
-                left: _screenPadding.left,
-                bottom: _isMobile ? 12.0 : 16.0,
-              ),
-              title: _buildShopTitle(shop),
-            ),
-            leading: _buildBackButton(colorScheme),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  Icons.more_vert,
-                  size: _isMobile ? 24.0 : 28.0,
-                  color: Colors.white,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // App Bar with Shop Header - with fixed aspect ratio on mobile
+            SliverAppBar(
+              expandedHeight: _appBarHeight,
+              pinned: true,
+              backgroundColor: colorScheme.primary,
+              flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.parallax,
+                background: _buildAppBarBackground(shop, colorScheme),
+                titlePadding: EdgeInsets.only(
+                  left: _screenPadding.left,
+                  bottom: _isMobile ? 12.0 : 16.0,
                 ),
-                onPressed: () => _showMenu(context),
-                tooltip: 'Shop Options',
+                title: _buildShopTitle(shop),
               ),
-            ],
-          ),
-
-          // Aspect ratio indicator for mobile
-          // if (_isMobile || _isSmallMobile)
-          //   SliverToBoxAdapter(
-          //     child: Padding(
-          //       padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
-          //       child: Center(
-          //         child: Container(
-          //           padding: const EdgeInsets.symmetric(
-          //             horizontal: 12,
-          //             vertical: 4,
-          //           ),
-          //           decoration: BoxDecoration(
-          //             color: Colors.blue[50],
-          //             borderRadius: BorderRadius.circular(20),
-          //           ),
-          //           child: Text(
-          //             'Header ratio: ${_fixedAspectRatioWidth.toStringAsFixed(3)} : ${_fixedAspectRatioHeight.toStringAsFixed(3)}',
-          //             style: TextStyle(
-          //               fontSize: 12,
-          //               color: Colors.blue[700],
-          //               fontWeight: FontWeight.w500,
-          //             ),
-          //           ),
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-
-          // Shop Details Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(_screenPadding.horizontal),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Search Bar
-                  Container(
-                    margin: EdgeInsets.only(bottom: _isMobile ? 16.0 : 20.0),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search products...',
-                        hintStyle: TextStyle(
-                          fontSize: _bodyFontSize,
-                          color: Colors.grey[500],
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          size: _isMobile ? 20.0 : 24.0,
-                          color: colorScheme.primary,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            _cardBorderRadius,
-                          ),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: _isMobile ? 16.0 : 20.0,
-                          vertical: _isMobile ? 14.0 : 18.0,
-                        ),
-                        suffixIcon:
-                            _searchController.text.isNotEmpty
-                                ? IconButton(
-                                  icon: Icon(
-                                    Icons.clear,
-                                    size: _isMobile ? 20.0 : 24.0,
-                                    color: Colors.grey[500],
-                                  ),
-                                  onPressed: () => _searchController.clear(),
-                                )
-                                : null,
-                      ),
-                      style: TextStyle(fontSize: _bodyFontSize),
-                    ),
+              leading: _buildBackButton(colorScheme),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    Icons.more_vert,
+                    size: _isMobile ? 24.0 : 28.0,
+                    color: Colors.white,
                   ),
-
-                  // Products Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Available Products',
-                        style: TextStyle(
-                          fontSize: _isMobile ? 18.0 : 20.0,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Consumer<ShopProductNearbyProductController>(
-                        builder: (context, controller, _) {
-                          final count =
-                              _searchController.text.isNotEmpty
-                                  ? controller.filteredProducts.length
-                                  : controller.productData?.products?.length ??
-                                      0;
-                          return Text(
-                            '($count items)',
-                            style: TextStyle(
-                              fontSize: _subtitleFontSize,
-                              color: Colors.grey[600],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: _isMobile ? 8.0 : 12.0),
-                ],
-              ),
+                  onPressed: () => _showMenu(context),
+                  tooltip: 'Shop Options',
+                ),
+              ],
             ),
-          ),
 
-          // Products Grid
-          Consumer<ShopProductNearbyProductController>(
-            builder: (context, controller, _) {
-              if (controller.isLoading) {
-                return SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: colorScheme.primary,
-                        ),
-                        SizedBox(height: _isMobile ? 16.0 : 20.0),
-                        Text(
-                          'Loading products...',
-                          style: TextStyle(
+            // Aspect ratio indicator for mobile
+            // if (_isMobile || _isSmallMobile)
+            //   SliverToBoxAdapter(
+            //     child: Padding(
+            //       padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+            //       child: Center(
+            //         child: Container(
+            //           padding: const EdgeInsets.symmetric(
+            //             horizontal: 12,
+            //             vertical: 4,
+            //           ),
+            //           decoration: BoxDecoration(
+            //             color: Colors.blue[50],
+            //             borderRadius: BorderRadius.circular(20),
+            //           ),
+            //           child: Text(
+            //             'Header ratio: ${_fixedAspectRatioWidth.toStringAsFixed(3)} : ${_fixedAspectRatioHeight.toStringAsFixed(3)}',
+            //             style: TextStyle(
+            //               fontSize: 12,
+            //               color: Colors.blue[700],
+            //               fontWeight: FontWeight.w500,
+            //             ),
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+
+            // Shop Details Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(_screenPadding.horizontal),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Search Bar
+                    Container(
+                      margin: EdgeInsets.only(bottom: _isMobile ? 16.0 : 20.0),
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search products...',
+                          hintStyle: TextStyle(
                             fontSize: _bodyFontSize,
-                            color: Colors.grey[600],
+                            color: Colors.grey[500],
                           ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            size: _isMobile ? 20.0 : 24.0,
+                            color: colorScheme.primary,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              _cardBorderRadius,
+                            ),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: _isMobile ? 16.0 : 20.0,
+                            vertical: _isMobile ? 14.0 : 18.0,
+                          ),
+                          suffixIcon:
+                              _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                    icon: Icon(
+                                      Icons.clear,
+                                      size: _isMobile ? 20.0 : 24.0,
+                                      color: Colors.grey[500],
+                                    ),
+                                    onPressed: () => _searchController.clear(),
+                                  )
+                                  : null,
+                        ),
+                        style: TextStyle(fontSize: _bodyFontSize),
+                      ),
+                    ),
+
+                    // Products Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Available Products',
+                          style: TextStyle(
+                            fontSize: _isMobile ? 18.0 : 20.0,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Consumer<ShopProductNearbyProductController>(
+                          builder: (context, controller, _) {
+                            final count =
+                                _searchController.text.isNotEmpty
+                                    ? controller.filteredProducts.length
+                                    : controller
+                                            .productData
+                                            ?.products
+                                            ?.length ??
+                                        0;
+                            return Text(
+                              '($count items)',
+                              style: TextStyle(
+                                fontSize: _subtitleFontSize,
+                                color: Colors.grey[600],
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
-                  ),
-                );
-              }
 
-              final bool isSearching = _searchController.text.isNotEmpty;
-              final productsToDisplay =
-                  isSearching
-                      ? controller.filteredProducts
-                      : controller.productData?.products;
+                    SizedBox(height: _isMobile ? 8.0 : 12.0),
+                  ],
+                ),
+              ),
+            ),
 
-              if (productsToDisplay == null || productsToDisplay.isEmpty) {
-                return SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          isSearching
-                              ? Icons.search_off_rounded
-                              : Icons.inventory_2_outlined,
-                          size: _headerIconSize * 1.5,
-                          color: Colors.grey[300],
-                        ),
-                        SizedBox(height: _isMobile ? 16.0 : 20.0),
-                        Text(
-                          isSearching
-                              ? "No products found for '${_searchController.text}'"
-                              : "No products available in this shop.",
-                          style: TextStyle(
-                            fontSize: _bodyFontSize,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
+            // Products Grid
+            Consumer<ShopProductNearbyProductController>(
+              builder: (context, controller, _) {
+                if (controller.isLoading) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: colorScheme.primary,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: _isMobile ? 8.0 : 12.0),
-                        if (!isSearching)
+                          SizedBox(height: _isMobile ? 16.0 : 20.0),
                           Text(
-                            'Tap the + button to add your first product',
+                            'Loading products...',
                             style: TextStyle(
-                              fontSize: _subtitleFontSize,
-                              color: Colors.grey[500],
+                              fontSize: _bodyFontSize,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final bool isSearching = _searchController.text.isNotEmpty;
+                final productsToDisplay =
+                    isSearching
+                        ? controller.filteredProducts
+                        : controller.productData?.products;
+
+                if (productsToDisplay == null || productsToDisplay.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            isSearching
+                                ? Icons.search_off_rounded
+                                : Icons.inventory_2_outlined,
+                            size: _headerIconSize * 1.5,
+                            color: Colors.grey[300],
+                          ),
+                          SizedBox(height: _isMobile ? 16.0 : 20.0),
+                          Text(
+                            isSearching
+                                ? "No products found for '${_searchController.text}'"
+                                : "No products available in this shop.",
+                            style: TextStyle(
+                              fontSize: _bodyFontSize,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
                             ),
                             textAlign: TextAlign.center,
                           ),
-                      ],
+                          SizedBox(height: _isMobile ? 8.0 : 12.0),
+                          if (!isSearching)
+                            Text(
+                              'Tap the + button to add your first product',
+                              style: TextStyle(
+                                fontSize: _subtitleFontSize,
+                                color: Colors.grey[500],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                        ],
+                      ),
                     ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: EdgeInsets.only(
+                    left: _screenPadding.left,
+                    right: _screenPadding.right,
+                    bottom: _isMobile ? 16.0 : 24.0,
+                  ),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _gridCrossAxisCount,
+                      crossAxisSpacing: _isMobile ? 12.0 : 16.0,
+                      mainAxisSpacing: _isMobile ? 12.0 : 16.0,
+                      childAspectRatio: _gridChildAspectRatio,
+                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final product = productsToDisplay[index];
+                      return _buildProductCard(product, colorScheme);
+                    }, childCount: productsToDisplay.length),
                   ),
                 );
-              }
+              },
+            ),
+          ],
+        ),
 
-              return SliverPadding(
-                padding: EdgeInsets.only(
-                  left: _screenPadding.left,
-                  right: _screenPadding.right,
-                  bottom: _isMobile ? 16.0 : 24.0,
+        // Floating Action Button
+        floatingActionButton: SizedBox(
+          width: _fabSize,
+          height: _fabSize,
+          child: FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => AddProductScreen(shopId: widget.shop.id ?? ''),
                 ),
-                sliver: SliverGrid(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _gridCrossAxisCount,
-                    crossAxisSpacing: _isMobile ? 12.0 : 16.0,
-                    mainAxisSpacing: _isMobile ? 12.0 : 16.0,
-                    childAspectRatio: _gridChildAspectRatio,
-                  ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final product = productsToDisplay[index];
-                    return _buildProductCard(product, colorScheme);
-                  }, childCount: productsToDisplay.length),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-
-      // Floating Action Button
-      floatingActionButton: SizedBox(
-        width: _fabSize,
-        height: _fabSize,
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => AddProductScreen(shopId: widget.shop.id ?? ''),
-              ),
-            ).then((result) {
-              if (result == true) {
-                final shopId = widget.shop.id;
-                if (shopId != null && shopId.isNotEmpty) {
-                  Provider.of<ShopProductNearbyProductController>(
-                    context,
-                    listen: false,
-                  ).loadProducts(shopId);
+              ).then((result) {
+                if (result == true) {
+                  final shopId = widget.shop.id;
+                  if (shopId != null && shopId.isNotEmpty) {
+                    Provider.of<ShopProductNearbyProductController>(
+                      context,
+                      listen: false,
+                    ).loadProducts(shopId);
+                  }
                 }
-              }
-            });
-          },
-          backgroundColor: const Color.fromARGB(255, 7, 3, 201),
-          child: Icon(Icons.add, size: _fabIconSize, color: Colors.white),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_fabSize / 2),
+              });
+            },
+            backgroundColor: const Color.fromARGB(255, 7, 3, 201),
+            child: Icon(Icons.add, size: _fabIconSize, color: Colors.white),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_fabSize / 2),
+            ),
           ),
         ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -600,20 +606,22 @@ class _ShopDetailsWithProductsScreenState
               ? Stack(
                 children: [
                   // Background image - using BoxFit.cover to maintain aspect ratio
-                  Positioned.fill(
+                  Container(
+                    color: Colors.white, // White background to match your image
+                  ),
+
+                  Center(
                     child: Image.network(
                       shop.headerImage!,
-                      fit:
-                          BoxFit
-                              .cover, // Changed from BoxFit.fill to BoxFit.cover
+                      fit: BoxFit.contain, // Keeps the full image visible
                       errorBuilder:
                           (_, __, ___) => Container(
-                            color: colorScheme.primary,
+                            color: Colors.white,
                             child: Center(
                               child: Icon(
                                 Icons.store,
                                 size: _headerIconSize,
-                                color: Colors.white.withOpacity(0.8),
+                                color: Colors.grey[400], // Changed to grey
                               ),
                             ),
                           ),
@@ -621,18 +629,7 @@ class _ShopDetailsWithProductsScreenState
                   ),
                   // Gradient overlay for better text visibility
                   Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.3),
-                          ],
-                        ),
-                      ),
-                    ),
+                    child: Container(color: Colors.black.withOpacity(0.2)),
                   ),
                 ],
               )

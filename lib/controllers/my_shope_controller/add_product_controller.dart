@@ -62,6 +62,7 @@ class ProductProvider with ChangeNotifier {
     String? category,
     String? estimatedTime,
     String? unitType,
+    String? itemType,
     String? deliveryOption,
   }) async {
     _setLoading(true);
@@ -82,6 +83,7 @@ class ProductProvider with ChangeNotifier {
         quantity: quantity,
         estimatedTime: estimatedTime,
         unitType: unitType,
+        itemType: itemType,
         deliveryOption: deliveryOption,
       );
 

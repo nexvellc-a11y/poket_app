@@ -47,7 +47,12 @@ class _AddShopState extends State<AddShop> {
       TextEditingController();
   final TextEditingController _agentCodeController = TextEditingController();
 
-  final List<String> sellerTypes = ["Manufacturer", "Wholesaler", "Retailer"];
+  final List<String> sellerTypes = [
+    "Manufacturer",
+    "Wholesaler",
+    "Retailer",
+    "Services",
+  ];
 
   String? _selectedSellerType;
   String? _selectedState;
@@ -1553,9 +1558,9 @@ class _AddShopState extends State<AddShop> {
                                   !isEditing, // Required only for new shop
                             ),
 
-                        _buildLabel("Seller Type${isEditing ? '' : ' *'}"),
+                        _buildLabel("Shop Type${isEditing ? '' : ' *'}"),
                         _buildDropdown(
-                          "Select seller type",
+                          "Select shop type",
                           _selectedSellerType,
                           sellerTypes,
                           (value) =>
