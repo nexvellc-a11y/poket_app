@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart'; // Core Firebase services initialization
 import 'package:flutter/material.dart'; // Flutter's Material Design widgets
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:poketstore/check_updation.dart';
 import 'package:poketstore/controllers/add_shop_controller/add_shop_controller.dart';
 import 'package:poketstore/controllers/add_shop_controller/all_shop_controller.dart';
 import 'package:poketstore/controllers/address_controller/address_controller.dart';
@@ -12,6 +13,7 @@ import 'package:poketstore/controllers/bottom_bar_controller/bottombar_controlle
 import 'package:poketstore/controllers/cart_controller/cart_controller.dart';
 // import 'package:poketstore/controllers/cart_controller/checkout_controller.dart';
 import 'package:poketstore/controllers/category_controller/category_controller.dart';
+import 'package:poketstore/controllers/chatbot_controller/chatbot_controller.dart';
 import 'package:poketstore/controllers/fcm_controller.dart';
 import 'package:poketstore/controllers/fcm_controller/fcm_controller.dart';
 import 'package:poketstore/controllers/forgot_password_controller/forgot_password_controller.dart';
@@ -36,6 +38,7 @@ import 'package:poketstore/controllers/product_search_controller/shop_search_con
 import 'package:poketstore/controllers/product_search_controller/state_search_controller.dart';
 import 'package:poketstore/controllers/reward_controller/reward_controller.dart';
 import 'package:poketstore/controllers/search_producer_controller.dart';
+import 'package:poketstore/controllers/service_booking_controller/service_booking_controller.dart';
 import 'package:poketstore/controllers/set_location_controller.dart';
 import 'package:poketstore/controllers/shop_nearby_controller/shop_nearby_controller.dart';
 import 'package:poketstore/controllers/shop_nearby_controller/shop_product_nearby_controller.dart';
@@ -49,7 +52,7 @@ import 'package:poketstore/service/notification(fcm)_service.dart/notification(f
 import 'package:poketstore/service/permission_service/permission_service.dart';
 import 'package:poketstore/view/splash/splash_screen.dart'; // Splash screen, likely the app's entry point
 import 'package:provider/provider.dart'; // State management library
-import 'package:poketstore/controllers/service_booking_controller/service_booking_controller.dart';
+
 import 'controllers/shop_of_user_controller/shop_of_user_controller.dart'; // Controller for user's shop
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -141,6 +144,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => DistrictController()),
         ChangeNotifierProvider(create: (_) => UserShopListController()),
         ChangeNotifierProvider(create: (_) => ServiceBookingController()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       // The root widget of the application.
       child: const MyApp(),
@@ -162,7 +166,9 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkForUpdate(context);
+    });
     // Re-added the Future.microtask block to fetch and log the current location.
     Future.microtask(() async {
       try {

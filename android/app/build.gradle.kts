@@ -21,8 +21,8 @@ android {
     // ✅ Change your package name (Google Play blocks "com.example")
     namespace = "com.example.poketstore"
 
-    compileSdk = 35
-    ndkVersion = "27.0.12077973"
+    compileSdk = 36
+    ndkVersion = "28.2.13676358"
 
     buildFeatures {
         buildConfig = true
@@ -35,13 +35,13 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "11"
     }
 
     defaultConfig {
         // ✅ Must match namespace above
         applicationId = "com.poketstor.platform"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName

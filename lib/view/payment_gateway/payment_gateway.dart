@@ -102,7 +102,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   // ----------------- CHECKOUT -----------------
   void _openCheckout() {
     final options = {
-      'key': 'rzp_test_R72iZNqI9xkkIA',
+      'key': 'rzp_live_s48ihKN0fO2WuR',
       'amount': (widget.amount * 100).toInt(),
       'name': 'PoketStor',
       'description': 'Subscription Payment',

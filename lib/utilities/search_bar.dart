@@ -1017,11 +1017,28 @@ class _SearchWidgetState extends State<SearchWidget> {
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    Icons.storefront_rounded,
-                    color: Colors.white,
-                    size: 28,
-                  ),
+                  child:
+                      (shop.headerImage != null && shop.headerImage!.isNotEmpty)
+                          ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              shop.headerImage!,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) => const Icon(
+                                    Icons.storefront_rounded,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                            ),
+                          )
+                          : const Icon(
+                            Icons.storefront_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                 ),
                 SizedBox(width: 12),
                 // Shop Details

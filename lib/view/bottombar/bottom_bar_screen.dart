@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:poketstore/controllers/bottom_bar_controller/bottombar_controller.dart';
 import 'package:poketstore/view/add_shop/shope_list_screen.dart';
+import 'package:poketstore/view/chat_bot/chat_bot.dart';
 import 'package:provider/provider.dart';
 import 'package:poketstore/view/cart_screen/cart_screen.dart';
 import 'package:poketstore/view/home/view/home_screen/home_screen.dart';
@@ -38,13 +39,41 @@ class _BottomBarScreenState extends State<BottomBarScreen> {
       child: Scaffold(
         backgroundColor: Colors.white, // Entire screen background white
 
-        body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          transitionBuilder:
-              (child, animation) =>
-                  FadeTransition(opacity: animation, child: child),
-          child: _screens[bottomBarProvider.selectedIndex],
+        body:Stack(
+  children: [
+    AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (child, animation) =>
+          FadeTransition(opacity: animation, child: child),
+      child: _screens[bottomBarProvider.selectedIndex],
+    ),
+    Positioned(
+      bottom: 20,
+      right: 20,
+      child: FloatingActionButton(
+        elevation: 0,
+        highlightElevation: 0,
+        backgroundColor: Colors.transparent,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const ChatScreen(),
+            ),
+          );
+        },
+        child: ClipOval(
+          child: Image.asset(
+            'assets/chatbot.png',
+            width: 50,
+            height: 50,
+            fit: BoxFit.cover, // or BoxFit.contain
+          ),
         ),
+      ),
+    ),
+  ],
+),
 
         // 🔥 Redesigned Bottom Bar
         bottomNavigationBar: Container(

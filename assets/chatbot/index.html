@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PoketStor AI Assistant – Nayana</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .container {
+      background: white;
+      padding: 36px 40px;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      max-width: 500px;
+      width: 90%;
+    }
+    h1 { color: #1a73e8; margin-bottom: 12px; font-size: 1.6rem; }
+    p { color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>PoketStor AI Assistant</h1>
+    <p>Welcome to the staging test environment for <strong>Nayana</strong>.</p>
+    <p>The chat session will open automatically on your screen.</p>
+  </div>
+
+  <vapi-widget
+    public-key="154d200d-726d-4f26-bdd2-0754bd49e7eb"
+    assistant-id="8ae5775e-e7a8-44d8-8d32-61a985ce5e40"
+    mode="chat"
+    theme="light"
+    position="bottom-right"
+    title="Nayana"
+    avatar-url="https://i.ibb.co/5W47FB7z/1781280031844.png"
+    start-button-text="Chat with Nayana"
+    chat-placeholder="Type your message..."
+    chat-first-message="Hii! I'm Nayana, Your AI assistant from PoketStor. How can I help you today?"
+  ></vapi-widget>
+
+  <script src="https://unpkg.com/@vapi-ai/client-sdk-react/dist/embed/widget.umd.js" async></script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PoketStor AI Assistant – Naiza</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .container {
+      background: white;
+      padding: 36px 40px;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      max-width: 500px;
+      width: 90%;
+    }
+    h1 { color: #1a73e8; margin-bottom: 12px; font-size: 1.6rem; }
+    p { color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 8px; }
+
+    /* Mobile fix */
+    @media (max-width: 480px) {
+      vapi-widget {
+        --vapi-widget-width: 92vw !important;
+        --vapi-widget-height: 65vh !important;
+        --vapi-widget-bottom: 16px !important;
+        --vapi-widget-right: 4vw !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>PoketStor AI Assistant</h1>
+    <p>Welcome to the staging test environment for <strong>Naiza</strong>.</p>
+    <p>The chat session will open automatically on your screen.</p>
+  </div>
+
+<div style="position:fixed;bottom:20px;right:12px;width:92vw;max-width:380px;height:560px;z-index:9999;overflow:hidden;border-radius:16px;">
+  <vapi-widget
+    public-key="154d200d-726d-4f26-bdd2-0754bd49e7eb"
+    assistant-id="6669a0c0-0596-4d29-a5a6-50f550fb07b7"
+    mode="chat"
+    theme="light"
+    position="bottom-right"
+    title="Naiza"
+    chat-first-message="Hi! I'm Naiza 👋 Your AI assistant from PoketStor. How can I help you today?"
+  ></vapi-widget>
+</div>
+
+<script src="https://unpkg.com/@vapi-ai/client-sdk-react/dist/embed/widget.umd.js" async></script>
+
+
+</body>
+</html>
